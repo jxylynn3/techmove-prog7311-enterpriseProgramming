@@ -58,6 +58,7 @@ namespace ST10448420_TechMove_GLMS
                 .WithStaticAssets();
 
             app.Run();
+            //heyy bestie,pls work
         }
     }
 }
