@@ -23,24 +23,45 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
+
                         @if (User.Identity.IsAuthenticated)
                         {
+                            @* --- ADMIN LINKS --- *@
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="ManageUsers">Manage Users</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Contract" asp-action="Index">All Contracts</a>
                                 </li>
                             }
-                            else
+
+                            @* --- CLIENT LINKS --- *@
+                            @if (User.IsInRole("Client"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Client" asp-action="Index">My Dashboard</a>
+                                    <a class="nav-link text-dark" asp-controller="ClientDashboard" asp-action="Index">My Dashboard</a>
+                                </li>
+                            }
+
+                            @* --- LOGISTICS MANAGER LINKS --- *@
+                            @if (User.IsInRole("LogisticsManager"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="ServiceRequest" asp-action="Create">Create Request</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Contract" asp-action="Index">Contracts</a>
                                 </li>
                             }
                         }
                     </ul>
 
-                    @* --- LOGIN / LOGOUT SECTION START --- *@
+                    @* --- LOGIN / LOGOUT SECTION --- *@
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
@@ -60,12 +81,11 @@
                             </li>
                         }
                     </ul>
-                    @* --- LOGIN / LOGOUT SECTION END --- *@
-
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -77,6 +97,7 @@
             &copy; 2026 - ST10448420_TechMove_GLMS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

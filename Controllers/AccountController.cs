@@ -22,32 +22,50 @@ namespace ST10448420_TechMove_GLMS.Controllers
         public IActionResult Login() => View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Look up the user by email first — PasswordSignInAsync expects a username by default.
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                ModelState.AddModelError("", "Invalid login attempt.");
-                return View(model);
-            }// you fucked the database configuration now nthing work.you better come fix this
+            // 🔐 Authenticate user
+            var result = await _signInManager.PasswordSignInAsync(
+                model.Email,
+                model.Password,
+                model.RememberMe,
+                lockoutOnFailure: false
+            );
 
-            // Use the user's UserName (or use CheckPasswordSignInAsync + SignInAsync)
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, model.Password, model.RememberMe, lockoutOnFailure: false);
             if (result.Succeeded)
             {
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    return RedirectToAction("Index", "Admin", new { area = "" });
 
-                return RedirectToAction("Index", "Home");
+                var user = await _userManager.FindByEmailAsync(model.Email);
+
+                // redirection based on role
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return RedirectToAction("Index", "Admin");
+                }
+
+                if (await _userManager.IsInRoleAsync(user, "Client"))
+                {
+                    return RedirectToAction("Index", "ClientDashboard");
+                }
+
+                if (await _userManager.IsInRoleAsync(user, "LogisticsManager"))
+                {
+                    return RedirectToAction("Index", "Admin"); // or Manager dashboard if you add one
+                }
+
+                // fallback
+                return RedirectToAction("Login", "Account");
             }
 
-            ModelState.AddModelError("", "Invalid login attempt.");
+            // ❌ Failed login
+            ModelState.AddModelError("", "Invalid login attempt");
             return View(model);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> Logout()

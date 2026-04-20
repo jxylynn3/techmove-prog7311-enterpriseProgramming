@@ -1,0 +1,27 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<h2>Create Users</h2>
+
+<form method="post">
+    <input name="email" placeholder="Email" />
+    <input name="password" type="password" placeholder="Password" />
+
+    <select name="role">
+        <option>Admin</option>
+        <option>Client</option>
+        <option>LogisticsManager</option>
+    </select>
+
+    <select name="clientId">
+        <option value="">No Client</option>
+        @foreach (var client in ViewBag.Clients)
+        {
+            <option value="@client.ClientID">@client.Name</option>
+        }
+    </select>
+
+    <button type="submit">Create</button>
+</form>

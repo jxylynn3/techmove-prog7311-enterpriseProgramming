@@ -1,0 +1,26 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<h2>Create Service Request</h2>
+
+@if (ViewBag.Contract != null)
+{
+    <p>Contract ID: @ViewBag.Contract.ContractID</p>
+    <p>Status: @ViewBag.Contract.Status</p>
+}
+
+<form method="post">
+    <input type="hidden" name="contractId" value="@ViewBag.Contract?.ContractID" />
+
+    <input name="description" placeholder="Description" />
+    <input name="costUSD" placeholder="Cost USD" />
+
+    <button type="submit">Submit</button>
+</form>
+
+@if (ViewBag.Error != null)
+{
+    <p style="color:red">@ViewBag.Error</p>
+}

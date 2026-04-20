@@ -37,11 +37,12 @@ namespace ST10448420_TechMove_GLMS.Data
             // Get the ID of the client we just ensured exists
             var defaultClient = await context.Clients.FirstOrDefaultAsync(c => c.Name == "Samsung Electronics");
 
-            // 3. Seed Default Admin User
+            //Seed Default Admin User
             var adminEmail = "admin@techmove.com";
-            if (await userManager.FindByEmailAsync(adminEmail) == null)
+            var admin = await userManager.FindByEmailAsync(adminEmail);
+            if (admin == null)
             {
-                var admin = new ApplicationUser
+                admin = new ApplicationUser
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
@@ -52,11 +53,12 @@ namespace ST10448420_TechMove_GLMS.Data
                 await userManager.AddToRoleAsync(admin, "Admin");
             }
 
-            // 4. Seed a Default Client User (Linked to Samsung)
+            //Seed a Default Client User (Linked to Samsung)
             var clientEmail = "user@samsung.com";
-            if (await userManager.FindByEmailAsync(clientEmail) == null && defaultClient != null)
+            var clientUser = await userManager.FindByEmailAsync(clientEmail);
+            if (clientUser == null && defaultClient != null)
             {
-                var clientUser = new ApplicationUser
+                clientUser = new ApplicationUser
                 {
                     UserName = clientEmail,
                     Email = clientEmail,
@@ -70,6 +72,20 @@ namespace ST10448420_TechMove_GLMS.Data
                 {
                     await userManager.AddToRoleAsync(clientUser, "Client");
                 }
+            }
+            var logisticsEmail = "manager@techmove.com";
+
+            if (await userManager.FindByEmailAsync(logisticsEmail) == null)
+            {
+                var manager = new ApplicationUser
+                {
+                    UserName = logisticsEmail,
+                    Email = logisticsEmail,
+                    EmailConfirmed = true
+                };
+
+                await userManager.CreateAsync(manager, "Manager123!");
+                await userManager.AddToRoleAsync(manager, "LogisticsManager");
             }
         }
     }

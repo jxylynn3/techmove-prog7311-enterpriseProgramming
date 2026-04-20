@@ -1,0 +1,29 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ST10448420_TechMove_GLMS.Models.Contract
+
+<h2>Contract Details</h2>
+
+<p>Status: <strong>@Model.Status</strong></p>
+
+@if (Model.CurrentState.contractCanRaiseServiceRequest())
+{
+    <p style="color:green;">You CAN create a service request</p>
+    <a asp-controller="ServiceRequest" asp-action="Create" asp-route-contractId="@Model.ContractID">
+        Create Service Request
+    </a>
+}
+else
+{
+    <p style="color:red;">Cannot create request (Contract inactive)</p>
+}
+
+<hr />
+
+<h3>Change Status (Testing)</h3>
+<a asp-action="ChangeStatus" asp-route-id="@Model.ContractID" asp-route-status="Active">Active</a>
+<a asp-action="ChangeStatus" asp-route-id="@Model.ContractID" asp-route-status="Expired">Expired</a>
+<a asp-action="ChangeStatus" asp-route-id="@Model.ContractID" asp-route-status="OnHold">On Hold</a>

@@ -26,5 +26,6 @@ namespace ST10448420_TechMove_GLMS.Models
         [Required]
         [StringLength(50)]
         public string Status { get; set; } // Requested, Processed, etc.
+        public DateTime CreatedAt { get; internal set; }
     }
 }

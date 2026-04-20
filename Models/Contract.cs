@@ -31,10 +31,25 @@ namespace ST10448420_TechMove_GLMS.Models
         public string SignedAgreementFilePath { get; set; }
 
         // Logic hook for the State Pattern (Not mapped to DB)
-        [NotMapped]
-        public IContractState CurrentState { get; set; }
+        //[NotMapped]
+        //public IContractState CurrentState { get; set; }
+        //replacing the abovve with switch casing to determine the state based on the Status property, which is stored in the db.
+        public IContractState CurrentState
+        {
+            get
+            {
+                return Status switch
+                {
+                    "Active" => new Contract_ActiveState(),
+                    "Expired" => new Contract_ExpiredState(),
+                    "OnHold" => new Contract_OnHoldState(),
+                    _ => new Contract_DraftState() // Default state since at that point the contract is still being created by the client and not yet active [typing and probably didnt save it]
+                };
+            }
+        }
 
         public virtual ICollection<ServiceRequest> ServiceRequests { get; set; }
+
     }
 }
 

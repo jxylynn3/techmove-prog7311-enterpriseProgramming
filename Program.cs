@@ -22,6 +22,7 @@ namespace ST10448420_TechMove_GLMS
                 options.Password.RequiredLength = 6;
                 options.Password.RequireUppercase = true;
             })
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
@@ -40,12 +41,16 @@ namespace ST10448420_TechMove_GLMS
             using (var scope = app.Services.CreateScope())
             {
                 var _services = scope.ServiceProvider;
-                //var _context = _services.GetRequiredService<ApplicationDbContext>();
-                //_context.Database.EnsureDeleted();
-                //_context.Database.Migrate();   
+                var _context = _services.GetRequiredService<ApplicationDbContext>();
+
                 ////run then delete
                 try
                 {
+                    // This forces the DB to be created based on your migrations folder.
+                    // Once the DB shows up in SQL Object Explorer, you can comment these two lines out again.
+                    _context.Database.EnsureCreated();
+
+                    // Seed initial data
                     await DataSeeding.SeedData(_services);
                 }
                 catch (Exception ex)
@@ -65,7 +70,9 @@ namespace ST10448420_TechMove_GLMS
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
             app.UseRouting();
+
             //authentication and authorization middleware
             app.UseAuthentication();
             app.UseAuthorization();

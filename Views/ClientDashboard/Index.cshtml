@@ -1,34 +1,15 @@
-﻿@{
-    ViewData["Title"] = "Client Dashboard";
+﻿@model IEnumerable<ST10448420_TechMove_GLMS.Models.Contract>
+
+<h2>My Contracts</h2>
+
+@foreach (var c in Model)
+{
+    <div>
+        <p>Contract: @c.ContractID</p>
+        <p>Status: @c.Status</p>
+
+        <a asp-controller="Contract" asp-action="Details" asp-route-id="@c.ContractID">
+            View Details
+        </a>
+    </div>
 }
-
-<div class="container">
-    <div class="mt-4 p-5 bg-light border rounded">
-        <h1>Welcome to Your Personal Dashboard</h1>
-        <p class="text-muted">Tracking your specific logistics and contracts.</p>
-    </div>
-
-    <hr />
-
-    <div class="alert alert-info">
-        <strong>Notice:</strong> As a Client, you only see information regarding your specific company ID.
-    </div>
-
-    <h3>My Active Contracts</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Contract ID</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>---</td>
-                <td><span class="badge bg-secondary">No Data Loaded Yet</span></td>
-                <td><button class="btn btn-sm btn-info" disabled>View Details</button></td>
-            </tr>
-        </tbody>
-    </table>
-</div>

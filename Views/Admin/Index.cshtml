@@ -3,48 +3,10 @@
 *@
 @{
 }
-@model ST10448420_TechMove_GLMS.Models.ViewModels.LoginViewModel
+<h2>Admin Dashboard</h2>
 
-@{
-    ViewData["Title"] = "Login";
-}
-
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <h2 class="text-center">GLMS Login</h2>
-            <hr />
-            <form asp-action="Login" method="post">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Email" class="control-label"></label>
-                    <input asp-for="Email" class="form-control" placeholder="admin@techmove.com" />
-                    <span asp-validation-for="Email" class="text-danger"></span>
-                </div>
-
-                <div class="form-group mb-3">
-                    <label asp-for="Password" class="control-label"></label>
-                    <input asp-for="Password" class="form-control" type="password" />
-                    <span asp-validation-for="Password" class="text-danger"></span>
-                </div>
-
-                <div class="form-group form-check mb-3">
-                    <label class="form-check-label">
-                        <input class="form-check-label" asp-for="RememberMe" /> @Html.DisplayNameFor(model => model.RememberMe)
-                    </label>
-                </div>
-
-                <div class="form-group d-grid">
-                    <button type="submit" class="btn btn-primary">Sign In</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div>
+    <h3>Total Users: @ViewBag.TotalUsers</h3>
+    <h3>Total Clients: @ViewBag.TotalClients</h3>
+    <h3>Total Contracts: @ViewBag.TotalContracts</h3>
 </div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
