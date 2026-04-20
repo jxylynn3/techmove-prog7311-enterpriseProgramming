@@ -8,7 +8,7 @@ namespace ST10448420_TechMove_GLMS
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             //database connection
@@ -19,7 +19,7 @@ namespace ST10448420_TechMove_GLMS
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {// the rules for usernames and passwords
                 options.Password.RequireDigit = true;
-                options.Password.RequiredLength = 8;
+                options.Password.RequiredLength = 6;
                 options.Password.RequireUppercase = true;
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -36,6 +36,25 @@ namespace ST10448420_TechMove_GLMS
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
+            // Seed initial data (roles and admin user)
+            using (var scope = app.Services.CreateScope())
+            {
+                var _services = scope.ServiceProvider;
+                //var _context = _services.GetRequiredService<ApplicationDbContext>();
+                //_context.Database.EnsureDeleted();
+                //_context.Database.Migrate();   
+                ////run then delete
+                try
+                {
+                    await DataSeeding.SeedData(_services);
+                }
+                catch (Exception ex)
+                {
+                    // Exception handlingg for seeding data.
+                    var _logger = _services.GetRequiredService<ILogger<Program>>();
+                    _logger.LogError(ex, "An error occurred while seeding to ST10448420_TechMove_GLMS database.");
+                }
+            }
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

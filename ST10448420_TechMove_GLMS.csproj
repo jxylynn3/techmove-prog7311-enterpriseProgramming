@@ -18,10 +18,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
+    <PackageReference Include="NuGet.Packaging" Version="7.3.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Views\ClientDashboard\" />
     <Folder Include="Views\Contract\" />
     <Folder Include="Views\ServiceRequest\" />
   </ItemGroup>
