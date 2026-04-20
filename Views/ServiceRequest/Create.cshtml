@@ -1,26 +1,70 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model ST10448420_TechMove_GLMS.Models.ViewModels.ServiceRequestViewModel
+
 @{
-}
-<h2>Create Service Request</h2>
-
-@if (ViewBag.Contract != null)
-{
-    <p>Contract ID: @ViewBag.Contract.ContractID</p>
-    <p>Status: @ViewBag.Contract.Status</p>
+    ViewData["Title"] = "Create Service Request";
 }
 
-<form method="post">
-    <input type="hidden" name="contractId" value="@ViewBag.Contract?.ContractID" />
+<div class="container mt-4">
+    <h2>Create Service Request</h2>
+    <hr />
 
-    <input name="description" placeholder="Description" />
-    <input name="costUSD" placeholder="Cost USD" />
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                @* Validation Summary for State or Guard errors *@
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-    <button type="submit">Submit</button>
-</form>
+                @* Hidden field for the Contract Link *@
+                <input type="hidden" asp-for="ContractID" />
 
-@if (ViewBag.Error != null)
-{
-    <p style="color:red">@ViewBag.Error</p>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">Description of Services</label>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="e.g. Monthly logistics maintenance for Gauteng route"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CostUSD" class="form-label">Cost (USD)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input asp-for="CostUSD" class="form-control" type="number" step="0.01" />
+                    </div>
+                    <small class="text-muted">This will be automatically converted to ZAR using real-time rates.</small>
+                    <span asp-validation-for="CostUSD" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="File" class="form-label">Upload PDF Documentation</label>
+                    <input asp-for="File" type="file" class="form-control" accept=".pdf" />
+                    <small class="text-info">Maximum size: 5MB. Must be a PDF.</small>
+                    <span asp-validation-for="File" class="text-danger"></span>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                    <a asp-controller="ClientDashboard" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+
+        @* Side panel to show the User which contract they are working on *@
+        <div class="col-md-4 offset-md-1">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    Selected Contract
+                </div>
+                <div class="card-body">
+                    <p><strong>Contract ID:</strong> @Model.ContractID</p>
+                    <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
+                    <p class="text-muted small">Only active contracts can receive service requests. If the status changes during this process, the submission will be blocked.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

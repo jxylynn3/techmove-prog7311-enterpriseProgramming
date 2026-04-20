@@ -3,31 +3,55 @@ using ST10448420_TechMove_GLMS.Patterns.Singleton;
 
 namespace ST10448420_TechMove_GLMS.Patterns.Builder
 {
-    public class ServiceRequestBuilder: IServiceRequestBuilder
+    public class ServiceRequestBuilder : IServiceRequestBuilder
     {
         private ServiceRequest _sRequest = new ServiceRequest();
 
-        public void setContract(Contract _contract)
+        public ServiceRequestBuilder SetContract(int contractId)
         {
-            _sRequest.ContractID = _contract.ContractID;
+            _sRequest.ContractID = contractId;
+            return this; // Allows chaining
         }
 
-        public void setContractDescription(string _contractDesc)
+        public ServiceRequestBuilder SetDescription(string description)
         {
-            _sRequest.Description = _contractDesc;
+            _sRequest.Description = description;
+            return this;
         }
 
-        public void ApplyCurrencyConversion(decimal usdAmount)
+        public ServiceRequestBuilder SetCostUSD(decimal cost)
         {
-            var rate = ExchangeRates.Instance.GetRate();
-            _sRequest.CostUSD = usdAmount;
-            _sRequest.CostZAR = usdAmount * rate;
+            _sRequest.CostUSD = cost;
+            return this;
+        }
+
+        public ServiceRequestBuilder SetCostZAR(decimal cost)
+        {
+            _sRequest.CostZAR = cost;
+            return this;
+        }
+
+        public ServiceRequestBuilder SetFilePath(string path)
+        {
+            // Assuming your ServiceRequest model has a DocumentPath or FilePath property
+            _sRequest.DocumentPath = path;
+            return this;
         }
 
         public ServiceRequest Build()
         {
             _sRequest.Status = "Requested";
+            // Ensure we return a fresh instance if needed, 
+            // but for this flow, returning the built object is standard.
             return _sRequest;
+        }
+
+        // Keep your old method for backward compatibility if Director still uses it
+        public void ApplyCurrencyConversion(decimal usdAmount)
+        {
+            var rate = ExchangeRates.Instance.GetRate();
+            _sRequest.CostUSD = usdAmount;
+            _sRequest.CostZAR = usdAmount * (decimal)rate;
         }
     }
 }

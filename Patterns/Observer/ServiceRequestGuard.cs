@@ -1,5 +1,5 @@
 ﻿using ST10448420_TechMove_GLMS.Models;
-using System.Diagnostics.Contracts;
+
 
 namespace ST10448420_TechMove_GLMS.Patterns.Observer
 {
@@ -20,8 +20,18 @@ namespace ST10448420_TechMove_GLMS.Patterns.Observer
                 Console.WriteLine("Contract is active. Allow new requests to be created.");
             }
         }
+
         //add clauses the handle the different states of the contract, for example if the contract is on hold,
         //then block new requests and also notify the client that their contract is on hold.
         // and if active then allow new requests
+        public bool Validate(Contract contract)
+        {
+            if (contract.Status == "Expired" || contract.Status == "On Hold")
+            {
+                return false;
+            }
+
+            return true;
+        }
     }
 }

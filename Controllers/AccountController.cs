@@ -28,7 +28,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // 🔐 Authenticate user
+            // Authenticate user
             var result = await _signInManager.PasswordSignInAsync(
                 model.Email,
                 model.Password,
@@ -61,7 +61,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            // ❌ Failed login
+            // Failed login
             ModelState.AddModelError("", "Invalid login attempt");
             return View(model);
         }

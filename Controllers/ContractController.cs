@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ST10448420_TechMove_GLMS.Data;
 
 namespace ST10448420_TechMove_GLMS.Controllers
 {
+    [Authorize(Roles = "Client")]
     public class ContractController : Controller
     {
     private readonly ApplicationDbContext _context;
@@ -28,6 +31,8 @@ namespace ST10448420_TechMove_GLMS.Controllers
             var contract = _context.Contracts
                 .Include(c => c.Client)
                 .FirstOrDefault(c => c.ContractID == id);
+            if (contract == null)
+                return NotFound();
 
             return View(contract);
         }

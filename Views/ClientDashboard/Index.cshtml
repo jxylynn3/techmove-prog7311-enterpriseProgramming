@@ -1,15 +1,28 @@
-﻿@model IEnumerable<ST10448420_TechMove_GLMS.Models.Contract>
+﻿@model List<Contract>
 
-<h2>My Contracts</h2>
+<h2>Your Contracts</h2>
 
-@foreach (var c in Model)
-{
-    <div>
-        <p>Contract: @c.ContractID</p>
-        <p>Status: @c.Status</p>
+<table class="table">
+    <tr>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+        <th></th>
+    </tr>
 
-        <a asp-controller="Contract" asp-action="Details" asp-route-id="@c.ContractID">
-            View Details
-        </a>
-    </div>
-}
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.StartDate</td>
+            <td>@item.EndDate</td>
+            <td>@item.Status</td>
+            <td>
+                <a asp-controller="Contract"
+                       asp-action="Details"
+                       asp-route-id="@item.ContractID">
+                    View
+                </a>
+            </td>
+        </tr>
+    }
+</table>
