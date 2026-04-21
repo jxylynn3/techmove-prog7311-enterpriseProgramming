@@ -35,7 +35,9 @@ namespace ST10448420_TechMove_GLMS
 
             // Add services to the container.establishing MVC 
             builder.Services.AddControllersWithViews();
-
+            //DI for the UtilsServices, so that they can be easily used across the application
+            builder.Services.AddScoped<PDFManagementService>();
+            builder.Services.AddHttpClient<CurrencyApiService>();
             var app = builder.Build();
             // Seed initial data (roles and admin user)
             using (var scope = app.Services.CreateScope())

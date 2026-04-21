@@ -12,8 +12,8 @@ using ST10448420_TechMove_GLMS.Data;
 namespace ST10448420_TechMove_GLMS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260419162438_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260421153119_FixesSoThatLogicWorks")]
+    partial class FixesSoThatLogicWorks
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -311,9 +311,17 @@ namespace ST10448420_TechMove_GLMS.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DocumentPath")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
 
                     b.Property<string>("Status")
                         .IsRequired()

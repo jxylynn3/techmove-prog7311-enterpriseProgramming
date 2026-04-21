@@ -2,21 +2,18 @@
 
 namespace ST10448420_TechMove_GLMS.Models.ViewModels
 {
-    public class ServiceRequestViewModel
+    public class AdminServiceRequestEditViewModel
     {
-
         public int RequestID { get; set; }
-
-        public int ContractID { get; set; }
 
         [Required]
         public string Description { get; set; }
 
         [Required]
+        public string Status { get; set; }
+
+        [Required]
         [Display(Name = "Cost (USD)")]
         public decimal CostUSD { get; set; }
-
-        [Display(Name = "Supporting Document (PDF, optional)")]
-        public IFormFile? File { get; set; }
     }
 }

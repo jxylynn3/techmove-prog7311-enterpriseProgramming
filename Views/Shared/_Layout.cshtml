@@ -26,17 +26,20 @@
 
                         @if (User.Identity.IsAuthenticated)
                         {
-                            @* --- ADMIN LINKS --- *@
+                            @* --- ADMIN LINKS (Updated with your snippet logic) --- *@
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Dashboard</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Admin" asp-action="ManageUsers">Manage Users</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Contract" asp-action="Index">All Contracts</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="ServiceRequests">Service Requests</a>
                                 </li>
                             }
 
@@ -85,6 +88,9 @@
             </div>
         </nav>
     </header>
+
+    @* Horizontal Rule added after the header as requested *@
+    <hr />
 
     <div class="container">
         <main role="main" class="pb-3">

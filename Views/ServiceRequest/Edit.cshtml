@@ -1,20 +1,19 @@
 ﻿@model ST10448420_TechMove_GLMS.Models.ViewModels.ServiceRequestViewModel
 @{
-    ViewData["Title"] = "New Service Request";
+    ViewData["Title"] = "Edit Service Request";
 }
 
-<h2>New Service Request</h2>
-<p class="text-muted">Contract ID: @Model.ContractID</p>
+<h2>Edit Service Request #@Model.RequestID</h2>
 
-<form asp-action="Create" method="post" enctype="multipart/form-data" class="col-md-7">
+<form asp-action="Edit" method="post" enctype="multipart/form-data" class="col-md-7">
     @Html.AntiForgeryToken()
+    <input asp-for="RequestID" type="hidden" />
     <input asp-for="ContractID" type="hidden" />
     <div asp-validation-summary="All" class="text-danger mb-2"></div>
 
     <div class="mb-3">
         <label asp-for="Description" class="form-label">Service Description</label>
-        <textarea asp-for="Description" class="form-control" rows="5"
-                  placeholder="Describe the shipment, route, cargo details, special requirements..."></textarea>
+        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
     <div class="mb-3">
@@ -23,14 +22,13 @@
             <span class="input-group-text">$</span>
             <input asp-for="CostUSD" class="form-control" type="number" step="0.01" min="0" />
         </div>
-        <small class="text-muted">Will be automatically converted to ZAR.</small>
         <span asp-validation-for="CostUSD" class="text-danger"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="File" class="form-label">Supporting Document (PDF, optional)</label>
+        <label asp-for="File" class="form-label">Replace Document (leave blank to keep existing)</label>
         <input asp-for="File" type="file" accept=".pdf" class="form-control" />
     </div>
 
-    <button type="submit" class="btn btn-success">Submit Request</button>
-    <a asp-controller="ClientDashboard" asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+    <button type="submit" class="btn btn-warning">Save Changes</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
 </form>

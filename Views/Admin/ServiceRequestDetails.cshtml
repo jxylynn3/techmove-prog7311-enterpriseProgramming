@@ -1,0 +1,45 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ST10448420_TechMove_GLMS.Models.ServiceRequest
+@{
+    ViewData["Title"] = "Service Request Details";
+}
+
+<h2>Service Request #@Model.RequestID</h2>
+
+<dl class="row">
+    <dt class="col-sm-3">Client</dt>
+    <dd class="col-sm-9">@Model.Contract?.Client?.Name</dd>
+    <dt class="col-sm-3">Description</dt>
+    <dd class="col-sm-9">@Model.Description</dd>
+    <dt class="col-sm-3">Cost (USD)</dt>
+    <dd class="col-sm-9">$@Model.CostUSD.ToString("N2")</dd>
+    <dt class="col-sm-3">Cost (ZAR)</dt>
+    <dd class="col-sm-9">R @Model.CostZAR.ToString("N2")</dd>
+    <dt class="col-sm-3">Status</dt>
+    <dd class="col-sm-9">
+        <span class="badge bg-@(Model.Status == "Approved" ? "success" : Model.Status == "Rejected" ? "danger" : "warning")">
+            @Model.Status
+        </span>
+    </dd>
+    <dt class="col-sm-3">Created</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
+    <dt class="col-sm-3">Document</dt>
+    <dd class="col-sm-9">
+        @if (!string.IsNullOrEmpty(Model.DocumentPath))
+        {
+            <a href="@Model.DocumentPath" target="_blank" class="btn btn-sm btn-outline-primary">Download PDF</a>
+        }
+        else
+        {
+
+            <span class="text-muted">No document</span>
+        }
+    </dd>
+</dl>
+
+<a asp-action="EditServiceRequest" asp-route-id="@Model.RequestID" class="btn btn-warning">Edit</a>
+<a asp-action="ServiceRequests" class="btn btn-secondary ms-2">← Back</a>

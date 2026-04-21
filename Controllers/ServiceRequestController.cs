@@ -1,10 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ST10448420_TechMove_GLMS.Data;
 using ST10448420_TechMove_GLMS.Models;
 using ST10448420_TechMove_GLMS.Models.ViewModels;
 using ST10448420_TechMove_GLMS.Patterns.Builder;
-using ST10448420_TechMove_GLMS.Patterns.Observer;
 using ST10448420_TechMove_GLMS.UtilsServices;
 
 namespace ST10448420_TechMove_GLMS.Controllers
@@ -13,99 +14,165 @@ namespace ST10448420_TechMove_GLMS.Controllers
     public class ServiceRequestController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly PDFManagementService _pdfService;
         private readonly CurrencyApiService _currencyService;
+        private readonly PDFManagementService _pdfService;
+        private readonly UserManager<ApplicationUser> _userManager;  // ✅ Added
 
         public ServiceRequestController(
             ApplicationDbContext context,
+            CurrencyApiService currencyService,
             PDFManagementService pdfService,
-            CurrencyApiService currencyService)
+            UserManager<ApplicationUser> userManager)
         {
             _context = context;
-            _pdfService = pdfService;
             _currencyService = currencyService;
+            _pdfService = pdfService;
+            _userManager = userManager;
         }
 
-        [HttpGet]
-        public IActionResult Create(int contractId)
+        // ✅ FIX #12 — Index now loads the client's own service requests
+        public async Task<IActionResult> Index()
         {
-            var contract = _context.Contracts.Find(contractId);
-            if (contract == null) return NotFound();
+            var user = await _userManager.GetUserAsync(User);
 
-            // Passing the ID to the ViewModel for the form
-            return View(new ServiceRequestViewModel
-            {
-                ContractID = contractId
-            });
+            var requests = await _context.ServiceRequests
+                .Include(r => r.Contract)
+                .Where(r => r.Contract.ClientID == user.ClientID)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return View(requests);
         }
 
+        // GET: Create — checks contract state before allowing access
+        [HttpGet]
+        public async Task<IActionResult> Create(int contractId)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var contract = await _context.Contracts.FindAsync(contractId);
+
+            if (contract == null || contract.ClientID != user.ClientID)
+                return NotFound();
+
+            // ✅ FIX #6 — Use the State pattern correctly via CurrentState property
+            if (!contract.CurrentState.contractCanRaiseServiceRequest())
+            {
+                TempData["Error"] = $"Cannot create a service request. Your contract status is '{contract.Status}'. It must be Active.";
+                return RedirectToAction("Index", "ClientDashboard");
+            }
+
+            return View(new ServiceRequestViewModel { ContractID = contractId });
+        }
+
+        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ServiceRequestViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
-            var contract = _context.Contracts.Find(model.ContractID);
+            var contract = await _context.Contracts.FindAsync(model.ContractID);
             if (contract == null) return NotFound();
 
-            // 🛑 STATE PATTERN CHECK: Using the logic from your Details page
-            // We check the Status string directly or call the State method
-            if (contract.Status != "Active")
+            // ✅ FIX #6 — Double-check state on POST as well
+            if (!contract.CurrentState.contractCanRaiseServiceRequest())
             {
-                ModelState.AddModelError("", "This contract is no longer active. Service requests cannot be raised.");
+                ModelState.AddModelError("", $"Contract status is '{contract.Status}'. Only Active contracts can have service requests.");
                 return View(model);
             }
 
-            try
+            var rate = await _currencyService.GetRateAsync();
+            var costZAR = model.CostUSD * rate;
+
+            // ✅ FIX #5 — File is optional; only save if provided
+            string? filePath = null;
+            if (model.File != null)
             {
-                // 💰 CURRENCY: Fetch rate and calculate ZAR
-                var rate = await _currencyService.GetRateAsync();
-                decimal costZAR = model.CostUSD * (decimal)rate;
-
-                // 📁 FILE UPLOAD: Use the utility service to save the PDF securely
-                string filePath = await _pdfService.SaveFileAsync(model.File);
-
-                // 🧱 BUILDER PATTERN: Constructing the final object
-                // Note: We use the Director here to manage the complex building steps
-                var builder = new ServiceRequestBuilder();
-                var director = new ServiceRequestDirector();
-
-                // Constructing the request through the Director ensures all parts are validated
-                var serviceRequest = director.Construct(
-                    builder,
-                    model.ContractID,
-                    model.Description,
-                    model.CostUSD,
-                    costZAR,
-                    filePath
-                );
-
-                // 🔔 OBSERVER GUARD: Final safety check before DB save
-                var guard = new ServiceRequestGuard();
-                if (!guard.Validate(contract))
+                try { filePath = await _pdfService.SaveFileAsync(model.File); }
+                catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "Security Check Failed: Contract status changed during the upload process.");
+                    ModelState.AddModelError("", $"File upload failed: {ex.Message}");
                     return View(model);
                 }
-
-                _context.ServiceRequests.Add(serviceRequest);
-                await _context.SaveChangesAsync();
-
-                return RedirectToAction("Index", "ClientDashboard");
             }
-            catch (Exception ex)
-            {
-                // Catching errors from the API or File Service
-                ModelState.AddModelError("", "An error occurred: " + ex.Message);
-                return View(model);
-            }
+
+            var builder = new ServiceRequestBuilder();
+            var director = new ServiceRequestDirector();
+
+            var request = director.Construct(
+                builder,
+                model.ContractID,
+                model.Description,
+                model.CostUSD,
+                costZAR,
+                filePath!
+            );
+
+            _context.ServiceRequests.Add(request);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Service request submitted with status 'Draft'.";
+            return RedirectToAction("Index");
         }
 
-        public IActionResult Index()
+        // ✅ FIX — Edit GET (was completely missing)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            // Logic for the Client to view their specific service request history
-            return View();
+            var user = await _userManager.GetUserAsync(User);
+
+            var req = await _context.ServiceRequests
+                .Include(r => r.Contract)
+                .FirstOrDefaultAsync(r => r.RequestID == id);
+
+            if (req == null || req.Contract.ClientID != user.ClientID)
+                return NotFound();
+
+            var vm = new ServiceRequestViewModel
+            {
+                RequestID = req.RequestID,
+                ContractID = req.ContractID,
+                Description = req.Description,
+                CostUSD = req.CostUSD
+            };
+            return View(vm);
+        }
+
+        // ✅ FIX — Edit POST (was completely missing)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(ServiceRequestViewModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var user = await _userManager.GetUserAsync(User);
+
+            var req = await _context.ServiceRequests
+                .Include(r => r.Contract)
+                .FirstOrDefaultAsync(r => r.RequestID == model.RequestID);
+
+            if (req == null || req.Contract.ClientID != user.ClientID)
+                return NotFound();
+
+            req.Description = model.Description;
+            req.CostUSD = model.CostUSD;
+
+            var rate = await _currencyService.GetRateAsync();
+            req.CostZAR = model.CostUSD * rate;
+
+            if (model.File != null)
+            {
+                try { req.DocumentPath = await _pdfService.SaveFileAsync(model.File); }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                    return View(model);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Service request updated.";
+            return RedirectToAction("Index");
         }
     }
 }

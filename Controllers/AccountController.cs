@@ -22,50 +22,38 @@ namespace ST10448420_TechMove_GLMS.Controllers
         public IActionResult Login() => View();
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Authenticate user
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+            {
+                ModelState.AddModelError("", "Invalid login");
+                return View(model);
+            }
+
             var result = await _signInManager.PasswordSignInAsync(
-                model.Email,
-                model.Password,
-                model.RememberMe,
-                lockoutOnFailure: false
-            );
+                user, model.Password, false, false);
 
             if (result.Succeeded)
             {
-
-                var user = await _userManager.FindByEmailAsync(model.Email);
-
-                // redirection based on role
+                //role based redirection after login
                 if (await _userManager.IsInRoleAsync(user, "Admin"))
-                {
                     return RedirectToAction("Index", "Admin");
-                }
-
-                if (await _userManager.IsInRoleAsync(user, "Client"))
-                {
-                    return RedirectToAction("Index", "ClientDashboard");
-                }
 
                 if (await _userManager.IsInRoleAsync(user, "LogisticsManager"))
-                {
-                    return RedirectToAction("Index", "Admin"); // or Manager dashboard if you add one
-                }
+                    return RedirectToAction("Index", "Admin");
 
-                // fallback
-                return RedirectToAction("Login", "Account");
+                if (await _userManager.IsInRoleAsync(user, "Client"))
+                    return RedirectToAction("Index", "ClientDashboard");
             }
 
-            // Failed login
             ModelState.AddModelError("", "Invalid login attempt");
             return View(model);
         }
-
 
         [HttpPost]
         public async Task<IActionResult> Logout()
@@ -75,6 +63,10 @@ namespace ST10448420_TechMove_GLMS.Controllers
         }
     
         public IActionResult Index()
+        {
+            return View();
+        }
+        public IActionResult AccessDenied()
         {
             return View();
         }

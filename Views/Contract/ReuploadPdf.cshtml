@@ -1,0 +1,24 @@
+﻿@model ST10448420_TechMove_GLMS.Models.Contract
+@{
+    ViewData["Title"] = "Re-upload Contract PDF";
+}
+
+<h2>Re-upload Contract PDF</h2>
+<p class="text-muted">Contract #@Model.ContractID — @Model.Client?.Name</p>
+
+<div class="mb-3">
+    <a href="@Model.SignedAgreementFilePath" target="_blank">📎 View current PDF</a>
+</div>
+
+<form asp-action="ReuploadPdf" asp-route-id="@Model.ContractID" method="post" enctype="multipart/form-data" class="col-md-6">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="mb-3">
+        <label for="file" class="form-label">Select new PDF</label>
+        <input type="file" name="file" accept=".pdf" class="form-control" required />
+    </div>
+
+    <button type="submit" class="btn btn-warning">Upload</button>
+    <a asp-action="Details" asp-route-id="@Model.ContractID" class="btn btn-secondary ms-2">Cancel</a>
+</form>

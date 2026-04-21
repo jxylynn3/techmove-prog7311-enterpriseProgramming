@@ -1,17 +1,54 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<ST10448420_TechMove_GLMS.Models.ServiceRequest>
 @{
+    ViewData["Title"] = "My Service Requests";
 }
-@model IEnumerable<ST10448420_TechMove_GLMS.Models.ServiceRequest>
 
-<h2>Service Requests</h2>
+<h2>My Service Requests</h2>
 
-@foreach (var r in Model)
+@if (TempData["Success"] != null)
 {
-    <div>
-        <p>@r.Description</p>
-        <p>Status: @r.Status</p>
-        <p>ZAR: @r.CostZAR</p>
-    </div>
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<a asp-controller="ClientDashboard" asp-action="Index" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No service requests yet.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>Cost (USD)</th>
+                <th>Cost (ZAR)</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.RequestID</td>
+                    <td>@r.Description</td>
+                    <td>$@r.CostUSD.ToString("N2")</td>
+                    <td>R @r.CostZAR.ToString("N2")</td>
+                    <td>
+                        <span class="badge bg-@(r.Status == "Approved" ? "success" : r.Status == "Rejected" ? "danger" : r.Status == "Draft" ? "secondary" : "warning")">
+                            @r.Status
+                        </span>
+                    </td>
+                    <td>@r.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@r.RequestID" class="btn btn-sm btn-warning">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 }

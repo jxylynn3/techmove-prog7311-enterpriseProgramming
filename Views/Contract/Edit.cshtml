@@ -1,0 +1,62 @@
+﻿@model ST10448420_TechMove_GLMS.Models.ViewModels.ContractViewModel
+@{
+    ViewData["Title"] = "Edit Contract";
+}
+
+<h2>Edit Contract</h2>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data" class="col-md-7">
+    @Html.AntiForgeryToken()
+    <input asp-for="ContractID" type="hidden" />
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="ClientID" class="form-label">Client</label>
+        <select asp-for="ClientID" class="form-select">
+            @foreach (var c in Model.Clients!)
+            {
+                <option value="@c.ClientID" selected="@(Model.ClientID == c.ClientID)">@c.Name</option>
+            }
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="ServiceLevel" class="form-label">Service Level</label>
+        <select asp-for="ServiceLevel" class="form-select">
+            <option value="Standard">Standard</option>
+            <option value="Premium">Premium</option>
+            <option value="Enterprise">Enterprise</option>
+        </select>
+    </div>
+    <div class="row">
+        <div class="col mb-3">
+            <label asp-for="StartDate" class="form-label"></label>
+            <input asp-for="StartDate" type="date" class="form-control" />
+        </div>
+        <div class="col mb-3">
+            <label asp-for="EndDate" class="form-label"></label>
+            <input asp-for="EndDate" type="date" class="form-control" />
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label">Status</label>
+        <select asp-for="Status" class="form-select">
+            <option value="Draft">Draft</option>
+            <option value="Active">Active</option>
+            <option value="OnHold">On Hold</option>
+            <option value="Expired">Expired</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="SignedAgreementFile" class="form-label">Replace PDF (leave blank to keep existing)</label>
+        @if (!string.IsNullOrEmpty(Model.ExistingFilePath))
+        {
+            <div class="mb-1">
+                <a href="@Model.ExistingFilePath" target="_blank" class="text-muted small">📎 Current file</a>
+            </div>
+        }
+        <input asp-for="SignedAgreementFile" type="file" accept=".pdf" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-warning">Save Changes</button>
+    <a asp-controller="Admin" asp-action="Index" class="btn btn-secondary ms-2">Cancel</a>
+</form>

@@ -1,0 +1,44 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ST10448420_TechMove_GLMS.Models.ViewModels.EditUserViewModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<h2>Edit User</h2>
+
+<form asp-action="EditUser" method="post" class="col-md-6">
+    @Html.AntiForgeryToken()
+    <input asp-for="Id" type="hidden" />
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Role" class="form-label">Role</label>
+        <select asp-for="Role" class="form-select">
+            <option value="Admin">Admin</option>
+            <option value="LogisticsManager">Logistics Manager</option>
+            <option value="Client">Client</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="ClientID" class="form-label">Linked Client</label>
+        <select asp-for="ClientID" class="form-select">
+            <option value="">-- None --</option>
+            @foreach (var client in Model.Clients!)
+            {
+                <option value="@client.ClientID" selected="@(Model.ClientID == client.ClientID)">@client.Name</option>
+            }
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-warning">Save Changes</button>
+    <a asp-action="ManageUsers" class="btn btn-secondary ms-2">Cancel</a>
+</form>

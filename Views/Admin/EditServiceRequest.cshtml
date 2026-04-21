@@ -1,0 +1,40 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ST10448420_TechMove_GLMS.Models.ViewModels.AdminServiceRequestEditViewModel
+@{
+    ViewData["Title"] = "Edit Service Request";
+}
+
+<h2>Edit Service Request #@Model.RequestID</h2>
+
+<form asp-action="EditServiceRequest" method="post" class="col-md-6">
+    @Html.AntiForgeryToken()
+    <input asp-for="RequestID" type="hidden" />
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Status" class="form-label">Status</label>
+        <select asp-for="Status" class="form-select">
+            <option value="Draft">Draft</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Pending">Pending</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="CostUSD" class="form-label"></label>
+        <input asp-for="CostUSD" class="form-control" />
+        <span asp-validation-for="CostUSD" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-warning">Save</button>
+    <a asp-action="ServiceRequests" class="btn btn-secondary ms-2">Cancel</a>
+</form>

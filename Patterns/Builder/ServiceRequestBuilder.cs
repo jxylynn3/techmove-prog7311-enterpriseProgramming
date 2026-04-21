@@ -10,7 +10,7 @@ namespace ST10448420_TechMove_GLMS.Patterns.Builder
         public ServiceRequestBuilder SetContract(int contractId)
         {
             _sRequest.ContractID = contractId;
-            return this; // Allows chaining
+            return this;
         }
 
         public ServiceRequestBuilder SetDescription(string description)
@@ -33,25 +33,24 @@ namespace ST10448420_TechMove_GLMS.Patterns.Builder
 
         public ServiceRequestBuilder SetFilePath(string path)
         {
-            // Assuming your ServiceRequest model has a DocumentPath or FilePath property
             _sRequest.DocumentPath = path;
             return this;
         }
 
         public ServiceRequest Build()
         {
-            _sRequest.Status = "Requested";
-            // Ensure we return a fresh instance if needed, 
-            // but for this flow, returning the built object is standard.
+            // ✅ FIX #7 — Default status is "Draft" per requirements (State pattern)
+            _sRequest.Status = "Draft";
+            // ✅ FIX — Set CreatedAt timestamp on build
+            _sRequest.CreatedAt = DateTime.Now;
             return _sRequest;
         }
 
-        // Keep your old method for backward compatibility if Director still uses it
         public void ApplyCurrencyConversion(decimal usdAmount)
         {
             var rate = ExchangeRates.Instance.GetRate();
             _sRequest.CostUSD = usdAmount;
-            _sRequest.CostZAR = usdAmount * (decimal)rate;
+            _sRequest.CostZAR = usdAmount * rate;
         }
     }
 }

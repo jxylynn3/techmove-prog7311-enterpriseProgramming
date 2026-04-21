@@ -2,13 +2,13 @@
 
 namespace ST10448420_TechMove_GLMS.Models.ViewModels
 {
-    public class GLMSUserManagementViewModel
+    public class EditUserViewModel
     {
+        [Required]
+        public string Id { get; set; }
+
         [Required, EmailAddress]
         public string Email { get; set; }
-
-        [Required, DataType(DataType.Password)]
-        public string Password { get; set; }
 
         [Required]
         public string Role { get; set; }

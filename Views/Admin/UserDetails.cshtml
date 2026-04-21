@@ -1,0 +1,25 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model ST10448420_TechMove_GLMS.Models.ViewModels.UserWithRoleViewModel
+@{
+    ViewData["Title"] = "User Details";
+}
+
+<h2>User Details</h2>
+
+<dl class="row">
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@Model.Email</dd>
+    <dt class="col-sm-3">Username</dt>
+    <dd class="col-sm-9">@Model.UserName</dd>
+    <dt class="col-sm-3">Role</dt>
+    <dd class="col-sm-9"><span class="badge bg-primary">@Model.Role</span></dd>
+    <dt class="col-sm-3">Client</dt>
+    <dd class="col-sm-9">@Model.ClientName</dd>
+</dl>
+
+<a asp-action="EditUser" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+<a asp-action="ManageUsers" class="btn btn-secondary ms-2">← Back</a>
