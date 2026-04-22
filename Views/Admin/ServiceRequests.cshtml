@@ -37,7 +37,7 @@
                 <td>@r.Contract?.Client?.Name</td>
                 <td>@r.Description</td>
                 <td>$@r.CostUSD.ToString("N2")</td>
-                <td>R@r.CostZAR.ToString("N2")</td>
+                <td>@String.Format("R {0:N2}", r.CostZAR)</td>
                 <td>
                     <span class="badge bg-@(r.Status == "Approved" ? "success" : r.Status == "Rejected" ? "danger" : r.Status == "Draft" ? "secondary" : "warning")">
                         @r.Status
@@ -45,7 +45,7 @@
                 </td>
                 <td>@r.CreatedAt.ToString("dd MMM yyyy")</td>
                 <td>
-                    <a asp-action="ServiceRequestDetails" asp-route-id="@r.RequestID" class="btn btn-sm btn-info">View</a>
+                    <a asp-action="ServiceRequestDetails" asp-route-id="@r.RequestID" class="btn-view">View</a>
                     <a asp-action="EditServiceRequest" asp-route-id="@r.RequestID" class="btn btn-sm btn-warning">Edit</a>
 
                     <!-- Approve/Reject -->

@@ -1,19 +1,97 @@
-﻿@model List<Contract>
+﻿@model List<ST10448420_TechMove_GLMS.Models.Contract>
+@{
+    ViewData["Title"] = "Contracts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
 
-<h2>Contracts</h2>
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
 
-<a asp-action="Create">Create New</a>
+<div style="padding:1.5rem 0">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem">
+        <div>
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:#21295C">Contracts</div>
+            <div style="font-size:12px;color:rgba(27,59,111,.45);margin-top:2px">@Model.Count total</div>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">+ New contract</a>
+    </div>
 
-<table>
-    @foreach (var c in Model)
-    {
-        <tr>
-            <td>@c.Client?.Name</td>
-            <td>@c.Status</td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@c.ContractID">Edit</a> |
-                <a asp-action="Delete" asp-route-id="@c.ContractID">Delete</a>
-            </td>
-        </tr>
-    }
-</table>
+    <div class="table-responsive" style="border-radius:10px;border:1px solid rgba(6,90,130,.1);overflow:hidden">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Client</th>
+                    <th>Service level</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td style="color:rgba(27,59,111,.35);font-size:11px">@r.ContractID.ToString("D3")</td>
+                        <td><strong>@r.Client?.Name</strong></td>
+                        <td>@r.ServiceLevel</td>
+                        <td>@r.StartDate.ToString("dd MMM yyyy")</td>
+                        <td>@r.EndDate.ToString("dd MMM yyyy")</td>
+                        <td><span class="badge badge-@r.Status.ToLower()">@r.Status</span></td>
+                        <td>
+                            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                                <a asp-action="Details" asp-route-id="@r.ContractID" class="btn btn-view btn-sm">View</a>
+                                <a asp-action="Edit" asp-route-id="@r.ContractID" class="btn btn-edit btn-sm">Edit</a>
+
+                                @* Delete — disabled for Active contracts *@
+                                @if (r.Status == "Active")
+                                {
+                                    <button class="btn btn-sm btn-delete"
+                                            disabled
+                                            title="Cannot delete an Active contract"
+                                            style="opacity:.35;cursor:not-allowed">
+                                        Delete
+                                    </button>
+                                }
+                                else
+                                {
+                                    <form asp-controller="Contract" asp-action="Delete"
+                                          method="post" style="display:inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@r.ContractID" />
+                                        <button type="submit" class="btn btn-delete btn-sm"
+                                                onclick="return confirm('Delete contract @r.ContractID?')">
+                                            Delete
+                                        </button>
+                                    </form>
+                                }
+
+                                @* Status change form *@
+                                <form asp-controller="Admin" asp-action="ChangeStatus"
+                                      method="post" style="display:inline;display:flex;gap:4px;align-items:center">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@r.ContractID" />
+                                    <select name="status" class="form-select form-select-sm"
+                                            style="width:auto;font-size:11px;padding:4px 6px;height:auto">
+                                        <option value="Draft" selected="@(r.Status == "Draft")">Draft</option>
+                                        <option value="Active" selected="@(r.Status == "Active")">Active</option>
+                                        <option value="Expired" selected="@(r.Status == "Expired")">Expired</option>
+                                        <option value="OnHold" selected="@(r.Status == "OnHold")">On Hold</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-set btn-sm">Set</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

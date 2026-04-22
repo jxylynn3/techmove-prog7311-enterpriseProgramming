@@ -23,4 +23,8 @@
     <PackageReference Include="NuGet.Protocol" Version="6.12.5" />
   </ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="ST10448420_TechMove_GLMS.Tests" />
+	</ItemGroup>
+
 </Project>

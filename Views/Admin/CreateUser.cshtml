@@ -1,50 +1,76 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
-@model ST10448420_TechMove_GLMS.Models.ViewModels.GLMSUserManagementViewModel
+﻿@model ST10448420_TechMove_GLMS.Models.ViewModels.GLMSUserManagementViewModel
 @{
     ViewData["Title"] = "Create User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h2>Create New User</h2>
+<div style="max-width:520px;margin:2rem auto">
+    <h2 style="font-family:'Syne',sans-serif;color:#21295C;margin-bottom:1.5rem">Create User</h2>
 
-<form asp-action="CreateUser" method="post" class="col-md-6">
-    @Html.AntiForgeryToken()
-    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+    <form asp-action="CreateUser" method="post">
+        @Html.AntiForgeryToken()
 
-    <div class="mb-3">
-        <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="Password" class="form-label"></label>
-        <input asp-for="Password" type="password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="Role" class="form-label">Role</label>
-        <select asp-for="Role" class="form-select">
-            <option value="">-- Select Role --</option>
-            <option value="Admin">Admin</option>
-            <option value="LogisticsManager">Logistics Manager</option>
-            <option value="Client">Client</option>
-        </select>
-        <span asp-validation-for="Role" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="ClientID" class="form-label">Linked Client (optional)</label>
-        <select asp-for="ClientID" class="form-select">
-            <option value="">-- None --</option>
-            @foreach (var client in Model.Clients!)
-            {
-                <option value="@client.ClientID">@client.Name</option>
-            }
-        </select>
-    </div>
+        <div asp-validation-summary="All" class="alert alert-danger"
+             style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")"></div>
 
-    <button type="submit" class="btn btn-success">Create User</button>
-    <a asp-action="ManageUsers" class="btn btn-secondary ms-2">Cancel</a>
-</form>
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">Email</label>
+            <input asp-for="Email" class="form-control" id="emailInput" />
+            <span asp-validation-for="Email" class="text-danger" style="font-size:11px"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label">Password</label>
+            <input asp-for="Password" type="password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger" style="font-size:11px"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Role" class="form-label">Role</label>
+            <select asp-for="Role" class="form-select" id="roleSelect" onchange="toggleClientFields()">
+                <option value="">-- Select Role --</option>
+                <option value="Admin">Admin</option>
+                <option value="LogisticsManager">Logistics Manager</option>
+                <option value="Client">Client</option>
+            </select>
+            <span asp-validation-for="Role" class="text-danger" style="font-size:11px"></span>
+        </div>
+
+        @* Shown only when Role = Client *@
+        <div id="clientFields" style="display:none">
+            <div class="mb-3">
+                <label class="form-label">
+                    Link to existing client
+                    <span style="font-size:11px;color:rgba(27,59,111,.5)">(leave blank to create one automatically)</span>
+                </label>
+                <select asp-for="ClientID" class="form-select">
+                    <option value="">-- Create new client from email --</option>
+                    @foreach (var client in Model.Clients ?? new List<ST10448420_TechMove_GLMS.Models.Client>())
+                    {
+                        <option value="@client.ClientID">@client.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:1.5rem">
+            <button type="submit" class="btn btn-primary">Create user</button>
+            <a asp-action="ManageUsers" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function toggleClientFields() {
+            var role = document.getElementById('roleSelect').value;
+            document.getElementById('clientFields').style.display =
+                role === 'Client' ? 'block' : 'none';
+        }
+        // Run on page load in case of validation re-render
+        toggleClientFields();
+    </script>
+}

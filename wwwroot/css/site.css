@@ -1,31 +1,189 @@
-html {
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=Inter:wght@400;500&display=swap');
+
+:root {
+  --bg:     #E6EBEF;
+  --blue:   #1C7293;
+  --mid:    #065A82;
+  --navy:   #1B3B6F;
+  --deep:   #21295C;
+  --rust:   #823815;
+  --w:      #ffffff;
+  --border: rgba(6, 90, 130, .1);
+  --muted:  rgba(27, 59, 111, .45);
+}
+
+body { background: var(--bg) !important; font-family: 'Inter', sans-serif !important; }
+
+/* ── NAV ─────────────────────────────────────────────────── */
+.navbar, nav.navbar {
+  background: var(--deep) !important;
+  border-bottom: none !important;
+  padding: 0 1.5rem !important;
+  min-height: 50px;
+}
+.navbar-brand {
+  font-family: 'Syne', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #E6EBEF !important;
+  padding-right: 1.5rem;
+  border-right: 1px solid rgba(255,255,255,.1);
+  margin-right: 1rem;
+}
+.navbar-nav .nav-link {
+  font-size: 12px !important;
+  color: rgba(230,235,239,.5) !important;
+  padding: 0 .9rem !important;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid transparent;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active { color: #E6EBEF !important; }
+.navbar-nav .nav-link.active  { border-bottom-color: var(--blue); }
+.navbar-text { font-size: 11px; color: rgba(230,235,239,.4) !important; }
+.navbar-text a { color: var(--rust) !important; }
+
+/* ── PAGE WRAPPER ────────────────────────────────────────── */
+.container, .container-fluid { padding-top: 0 !important; }
+
+/* ── PAGE TITLE AREA ─────────────────────────────────────── */
+h1, h2.page-title, .display-4 {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  color: var(--deep) !important;
+  font-size: 20px !important;
+}
+h2 { font-size: 17px !important; color: var(--deep) !important; }
+
+/* Inlined page header pattern */
+.page-header, .d-flex.justify-content-between {
+  margin-bottom: 1rem;
+}
+
+/* ── TABLES ──────────────────────────────────────────────── */
+.table-responsive { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+.table { background: var(--w) !important; margin-bottom: 0 !important; font-size: 13px; }
+.table thead, .table thead tr, .table-dark, .table-dark thead {
+  background: var(--navy) !important;
+}
+.table thead th {
+  background: var(--navy) !important;
+  color: rgba(230,235,239,.75) !important;
+  font-weight: 500 !important;
+  font-size: 10px !important;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border: none !important;
+  padding: 10px 14px !important;
+}
+.table tbody td {
+  border-color: rgba(6,90,130,.07) !important;
+  padding: 11px 14px !important;
+  vertical-align: middle !important;
+  color: var(--deep);
+}
+.table tbody tr:hover { background: rgba(230,235,239,.45) !important; }
+.table-striped tbody tr:nth-of-type(odd) { background: transparent !important; }
+.table-bordered { border: none !important; }
+.table-bordered td, .table-bordered th { border-color: rgba(6,90,130,.07) !important; }
+
+/* ── BUTTONS — kill all Bootstrap colors ─────────────────── */
+.btn { border-radius: 6px !important; font-size: 12px !important; font-weight: 500 !important; font-family: 'Inter', sans-serif !important; padding: 6px 13px !important; border: none !important; transition: opacity .15s !important; }
+.btn:hover { opacity: .85; }
+
+.btn-primary,
+.btn-success { background: var(--mid) !important; color: #E6EBEF !important; border: none !important; }
+
+.btn-warning,
+.btn-secondary,
+.btn-info    { background: rgba(27,59,111,.09) !important; color: var(--navy) !important; border: 1px solid rgba(27,59,111,.18) !important; }
+
+.btn-danger  { background: rgba(130,56,21,.1) !important; color: var(--rust) !important; border: none !important; }
+
+.btn-outline-primary { background: transparent !important; color: var(--mid) !important; border: 1.5px solid rgba(6,90,130,.3) !important; }
+.btn-outline-secondary { background: var(--w) !important; color: var(--navy) !important; border: 1.5px solid rgba(27,59,111,.2) !important; }
+
+/* Specific action button labels (targets text content via class overrides) */
+.btn-approve, [value="Approve"] { background: var(--mid) !important; color: #E6EBEF !important; }
+.btn-reject  { background: rgba(130,56,21,.1) !important; color: var(--rust) !important; }
+.btn-set     { background: var(--navy) !important; color: #E6EBEF !important; }
+.btn-view    { background: rgba(28,114,147,.1) !important; color: var(--mid) !important; }
+.btn-edit    { background: rgba(27,59,111,.08) !important; color: var(--navy) !important; border: 1px solid rgba(27,59,111,.15) !important; }
+.btn-delete  { background: rgba(130,56,21,.08) !important; color: var(--rust) !important; }
+
+/* ── BADGES ──────────────────────────────────────────────── */
+.badge, .badge-pill {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  padding: 4px 10px !important;
+  border-radius: 20px !important;
+}
+.badge-success, .bg-success { background: rgba(6,90,130,.1) !important; color: var(--mid) !important; }
+.badge-warning, .bg-warning { background: rgba(27,59,111,.09) !important; color: var(--navy) !important; }
+.badge-danger,  .bg-danger  { background: rgba(130,56,21,.1) !important; color: var(--rust) !important; }
+.badge-primary, .bg-primary { background: rgba(28,114,147,.12) !important; color: var(--blue) !important; }
+.badge-secondary,.bg-secondary{ background: rgba(27,59,111,.08) !important; color: var(--navy) !important; }
+.badge-info,    .bg-info    { background: rgba(6,90,130,.1) !important; color: var(--mid) !important; }
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card {
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--w) !important;
+  box-shadow: none !important;
+}
+.card-header {
+  background: var(--w) !important;
+  border-bottom: 1px solid var(--border) !important;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  color: var(--deep);
   font-size: 14px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+/* ── FORMS ───────────────────────────────────────────────── */
+.form-control, .form-select {
+  border: 1.5px solid rgba(6,90,130,.2) !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  color: var(--deep) !important;
+  background: var(--w) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--blue) !important;
+  box-shadow: none !important;
+}
+.form-label {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--navy) !important;
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+/* ── ALERTS ──────────────────────────────────────────────── */
+.alert-success { background: rgba(6,90,130,.08) !important; color: var(--navy) !important; border-left: 3px solid var(--blue) !important; border-radius: 6px !important; }
+.alert-danger  { background: rgba(130,56,21,.08) !important; color: var(--rust) !important; border-left: 3px solid var(--rust) !important; border-radius: 6px !important; }
+.alert { border: none !important; font-size: 13px !important; }
+
+/* ── DROPDOWN (Set Status) ───────────────────────────────── */
+select.form-control, select.form-select {
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  height: auto !important;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+/* ── LINKS ───────────────────────────────────────────────── */
+a { color: var(--mid); }
+a:hover { color: var(--navy); }
 
-body {
-  margin-bottom: 60px;
-}
-
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
-}
+/* ── HEADINGS inside content ────────────────────────────── */
+.text-primary { color: var(--mid) !important; }
+.text-success { color: var(--mid) !important; }
+.text-warning { color: var(--navy) !important; }
+.text-danger  { color: var(--rust) !important; }
+.text-info    { color: var(--blue) !important; }
+.text-muted   { color: var(--muted) !important; }

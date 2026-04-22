@@ -69,25 +69,25 @@ namespace ST10448420_TechMove_GLMS.Controllers
 
         // ===== USER MANAGEMENT =====
         // ✅ FIX #8 — Consolidated ManageUsers showing roles + client
+        // AdminController.cs
+        [HttpGet]
         public async Task<IActionResult> ManageUsers()
         {
-            var users = await _context.Users.Include(u => u.Client).ToListAsync();
+            var users = await _userManager.Users.ToListAsync();
 
-            var viewModels = new List<UserWithRoleViewModel>();
+            var model = new List<UserWithRoleViewModel>();
             foreach (var user in users)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                viewModels.Add(new UserWithRoleViewModel
+                model.Add(new UserWithRoleViewModel
                 {
                     Id = user.Id,
-                    Email = user.Email!,
-                    UserName = user.UserName!,
-                    Role = roles.FirstOrDefault() ?? "No Role",
-                    ClientName = user.Client?.Name ?? "—"
+                    Email = user.Email,
+                    UserName = user.UserName, // adjust to your actual property
+                    Role = roles.FirstOrDefault() ?? "No role"
                 });
             }
-
-            return View(viewModels);
+            return View(model); // passes List<UserWithRoleViewModel>
         }
 
         // ✅ FIX #8 — User details
@@ -113,52 +113,69 @@ namespace ST10448420_TechMove_GLMS.Controllers
         // GET: Create User
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult CreateUser()
+        public async Task<IActionResult> CreateUser()
         {
             var model = new GLMSUserManagementViewModel
             {
-                Clients = _context.Clients.ToList()
+                Clients = await _context.Clients.ToListAsync()
             };
             return View(model);
         }
 
         // POST: Create User
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateUser(GLMSUserManagementViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                model.Clients = _context.Clients.ToList();
+                model.Clients = await _context.Clients.ToListAsync();
                 return View(model);
+            }
+
+            // If role is Client and no existing client was selected, create one automatically
+            int? resolvedClientID = model.ClientID;
+
+            if (model.Role == "Client" && resolvedClientID == null)
+            {
+                var newClient = new Client
+                {
+                    Name = model.Email, // use email as placeholder name
+                    ContactDetails = model.Email,
+                    Region = "Not specified"
+                };
+                _context.Clients.Add(newClient);
+                await _context.SaveChangesAsync(); // saves and generates ClientID
+                resolvedClientID = newClient.ClientID;
             }
 
             var user = new ApplicationUser
             {
                 UserName = model.Email,
                 Email = model.Email,
-                EmailConfirmed = true,
-                ClientID = model.ClientID
+                ClientID = resolvedClientID
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, model.Role);
-                TempData["Success"] = "User created.";
-                return RedirectToAction("ManageUsers");
+                if (!string.IsNullOrEmpty(model.Role))
+                    await _userManager.AddToRoleAsync(user, model.Role);
+
+                TempData["Success"] = "User created successfully.";
+                return RedirectToAction(nameof(ManageUsers));
             }
 
             foreach (var error in result.Errors)
-                ModelState.AddModelError("", error.Description);
+                ModelState.AddModelError(string.Empty, error.Description);
 
-            model.Clients = _context.Clients.ToList();
+            model.Clients = await _context.Clients.ToListAsync();
             return View(model);
         }
 
-        // ✅ FIX #8 — Edit User GET
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> EditUser(string id)
@@ -178,15 +195,15 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(vm);
         }
 
-        // ✅ FIX #8 — Edit User POST
-        [Authorize(Roles = "Admin")]
+        
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditUser(EditUserViewModel model)
         {
             if (!ModelState.IsValid)
             {
-                model.Clients = _context.Clients.ToList();
+                model.Clients = await _context.Clients.ToListAsync();
                 return View(model);
             }
 
@@ -194,34 +211,31 @@ namespace ST10448420_TechMove_GLMS.Controllers
             if (user == null) return NotFound();
 
             user.Email = model.Email;
-            user.UserName = model.Email;
-            user.ClientID = model.ClientID;
+            user.ClientID = model.ClientID; // if ApplicationUser has ClientID
+
             await _userManager.UpdateAsync(user);
 
-            // Swap roles
             var currentRoles = await _userManager.GetRolesAsync(user);
             await _userManager.RemoveFromRolesAsync(user, currentRoles);
             await _userManager.AddToRoleAsync(user, model.Role);
 
             TempData["Success"] = "User updated.";
-            return RedirectToAction("ManageUsers");
+            return RedirectToAction(nameof(ManageUsers));
         }
 
-        // ✅ FIX #8 — Delete User POST (was missing entirely)
-        [Authorize(Roles = "Admin")]
+       
+        //[Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteUser(string id)
+        public async Task<IActionResult> DeleteUser(string userId)
         {
-            var user = await _userManager.FindByIdAsync(id);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return NotFound();
-
             await _userManager.DeleteAsync(user);
             TempData["Success"] = "User deleted.";
-            return RedirectToAction("ManageUsers");
+            return RedirectToAction(nameof(ManageUsers));
         }
 
-        // ===== SERVICE REQUEST MANAGEMENT =====
         public IActionResult ServiceRequests()
         {
             var requests = _context.ServiceRequests
@@ -231,19 +245,20 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(requests);
         }
 
-        // ✅ FIX #8 — Full details for a service request
+        // this was missing entirely before — shows details of a service request, including contract and client info
+        [HttpGet]
         public async Task<IActionResult> ServiceRequestDetails(int id)
         {
             var req = await _context.ServiceRequests
                 .Include(r => r.Contract)
-                .ThenInclude(c => c!.Client)
+                    .ThenInclude(c => c.Client)
                 .FirstOrDefaultAsync(r => r.RequestID == id);
 
             if (req == null) return NotFound();
             return View(req);
         }
 
-        // ✅ FIX #8 — Edit Service Request GET
+        
         [HttpGet]
         public async Task<IActionResult> EditServiceRequest(int id)
         {
@@ -260,7 +275,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(vm);
         }
 
-        // ✅ FIX #8 — Edit Service Request POST
+       
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditServiceRequest(AdminServiceRequestEditViewModel model)

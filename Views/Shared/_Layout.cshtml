@@ -4,29 +4,83 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ST10448420_TechMove_GLMS</title>
+
     <script type="importmap"></script>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/glms.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ST10448420_TechMove_GLMS.styles.css" asp-append-version="true" />
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    body {
+        background: url('/images/wall.jpg') no-repeat center center fixed;
+        background-size: cover;
+    }
+
+    /* Strip all container padding so home page bleeds edge to edge */
+    .container-fluid.p-0,
+    main[role="main"] {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Interior pages (not home) get padding restored via .interior-page */
+    .interior-page {
+        padding: 1.5rem 1rem;
+        background: rgba(230,235,239,0.92);
+        min-height: calc(100vh - 52px);
+    }
+
+    .navbar {
+        background: #21295C !important;
+        backdrop-filter: none !important;
+    }
+    .navbar .nav-link,
+    .navbar .navbar-brand { color: rgba(230,235,239,0.8) !important; }
+    .navbar .nav-link:hover { color: #E6EBEF !important; }
+    .navbar .text-primary  { color: rgba(230,235,239,0.6) !important; }
+
+    footer {
+        background: rgba(33,41,92,0.85);
+        color: #E6EBEF;
+        padding: 1rem 0;
+        font-size: 12px;
+    }
+    footer .border-top { border-color: rgba(230,235,239,.15) !important; }
+</style>
 </head>
+
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-light border-bottom box-shadow ">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">GLMS TechMove</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
+
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
 
                         @if (User.Identity.IsAuthenticated)
                         {
-                            @* --- ADMIN LINKS (Updated with your snippet logic) --- *@
                             @if (User.IsInRole("Admin"))
                             {
                                 <li class="nav-item">
@@ -36,14 +90,13 @@
                                     <a class="nav-link text-dark" asp-controller="Admin" asp-action="ManageUsers">Manage Users</a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="Contract" asp-action="Index">All Contracts</a>
+                                    <a class="nav-link text-dark" asp-controller="Contract" asp-action="Index">Contracts</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Admin" asp-action="ServiceRequests">Service Requests</a>
                                 </li>
                             }
 
-                            @* --- CLIENT LINKS --- *@
                             @if (User.IsInRole("Client"))
                             {
                                 <li class="nav-item">
@@ -51,7 +104,6 @@
                                 </li>
                             }
 
-                            @* --- LOGISTICS MANAGER LINKS --- *@
                             @if (User.IsInRole("LogisticsManager"))
                             {
                                 <li class="nav-item">
@@ -64,7 +116,7 @@
                         }
                     </ul>
 
-                    @* --- LOGIN / LOGOUT SECTION --- *@
+                    <!-- LOGIN / LOGOUT -->
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
@@ -72,7 +124,7 @@
                                 <span class="nav-link text-primary">Hello, @User.Identity.Name!</span>
                             </li>
                             <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="form-inline">
+                                <form asp-controller="Account" asp-action="Logout" method="post">
                                     <button type="submit" class="nav-link btn btn-link text-dark border-0">Logout</button>
                                 </form>
                             </li>
@@ -89,24 +141,22 @@
         </nav>
     </header>
 
-    @* Horizontal Rule added after the header as requested *@
-    <hr />
+<div class="container-fluid p-0">
+    <main role="main" class="p-0 m-0">
+        @RenderBody()
+    </main>
+</div>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
+    <footer class="border-top text-white mt-5">
         <div class="container">
-            &copy; 2026 - ST10448420_TechMove_GLMS - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - ST10448420_TechMove_GLMS
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

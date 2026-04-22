@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — GLMS TechMove</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/glms.css" asp-append-version="true" />
+</head>
+<body class="admin-layout">
+    <nav class="sidebar">
+        <div class="sb-brand">
+            <span class="sb-logo">GLMS</span>
+            <span class="sb-sub">TechMove Admin</span>
+        </div>
+        <ul class="sb-nav">
+            <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "Dashboard" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="Dashboard">Dashboard</a>
+            </li>
+            <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "AllContracts" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="AllContracts">All Contracts</a>
+            </li>
+            <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "ManageUsers" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="ManageUsers">Manage Users</a>
+            </li>
+            <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "ServiceRequests" ? "active" : "")">
+                <a asp-controller="Admin" asp-action="ServiceRequests">Service Requests</a>
+            </li>
+        </ul>
+        <div class="sb-footer">
+            <span>@User.Identity?.Name</span>
+            <a asp-controller="Account" asp-action="Logout">Sign out</a>
+        </div>
+    </nav>
+    <div class="main-content">
+        <header class="topbar">
+            <h1 class="page-title">@ViewData["Title"]</h1>
+            <div class="topbar-actions">@RenderSection("TopbarActions", required: false)</div>
+        </header>
+        <main class="content-area">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success">@TempData["Success"]</div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+</body>
+</html>

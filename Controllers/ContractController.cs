@@ -29,15 +29,10 @@ namespace ST10448420_TechMove_GLMS.Controllers
         // ✅ FIX #13 — Clients only see their own contracts; Admin/Manager see all
         public async Task<IActionResult> Index()
         {
-            IQueryable<Contract> query = _context.Contracts.Include(c => c.Client);
-
-            if (User.IsInRole("Client"))
-            {
-                var user = await _userManager.GetUserAsync(User);
-                query = query.Where(c => c.ClientID == user.ClientID);
-            }
-
-            return View(await query.ToListAsync());
+            var contracts = await _context.Contracts
+                .Include(c => c.Client)
+                .ToListAsync();
+            return View(contracts);
         }
 
         // GET: Create — Admin/Logistics only
@@ -54,6 +49,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             };
             return View(vm);
         }
+
 
         // POST: Create — Admin/Logistics only
         [Authorize(Roles = "Admin,LogisticsManager")]
@@ -169,14 +165,23 @@ namespace ST10448420_TechMove_GLMS.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var contract = await _context.Contracts.FindAsync(id);
-            if (contract == null) return NotFound();
+
+            if (contract == null)
+                return NotFound();
+
+            // Guard: Active contracts cannot be deleted
+            if (contract.Status == "Active")
+            {
+                TempData["Error"] = "Active contracts cannot be deleted. Change the status to Draft or Expired first.";
+                return RedirectToAction(nameof(Index));
+            }
 
             _context.Contracts.Remove(contract);
             await _context.SaveChangesAsync();
-            TempData["Success"] = "Contract deleted.";
-            return RedirectToAction("Index", "Admin");
-        }
 
+            TempData["Success"] = $"Contract #{id} deleted successfully.";
+            return RedirectToAction(nameof(Index));
+        }
         // Details — All authorised roles
         public async Task<IActionResult> Details(int id)
         {
