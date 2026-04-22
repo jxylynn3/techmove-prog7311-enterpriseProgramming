@@ -13,8 +13,9 @@ namespace ST10448420_TechMove_GLMS.Controllers
     public class ContractController : Controller
     {
         private readonly ApplicationDbContext _context;
-        private readonly PDFManagementService _pdfService;      // ✅ FIX #4 — inject PDF service
-        private readonly UserManager<ApplicationUser> _userManager; // ✅ FIX #13 — inject for client filtering
+        //DI injection of the PDF service and UserManager for user-related operations
+        private readonly PDFManagementService _pdfService;      
+        private readonly UserManager<ApplicationUser> _userManager; 
 
         public ContractController(
             ApplicationDbContext context,
@@ -26,7 +27,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             _userManager = userManager;
         }
 
-        // ✅ FIX #13 — Clients only see their own contracts; Admin/Manager see all
+        //  Clients only see their own contracts; Admin/Manager see all
         public async Task<IActionResult> Index()
         {
             var contracts = await _context.Contracts
@@ -51,13 +52,12 @@ namespace ST10448420_TechMove_GLMS.Controllers
         }
 
 
-        // POST: Create — Admin/Logistics only
         [Authorize(Roles = "Admin,LogisticsManager")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ContractViewModel model)
         {
-            // ✅ FIX #4 — File is required on create
+            // a must to upload a PDF when creating a new contract; for edits, it's optional
             if (model.SignedAgreementFile == null)
                 ModelState.AddModelError("SignedAgreementFile", "A contract PDF is required.");
 
@@ -95,7 +95,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("Index", "Admin");
         }
 
-        // GET: Edit — Admin/Logistics only
+
         [Authorize(Roles = "Admin,LogisticsManager")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -117,7 +117,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(vm);
         }
 
-        // POST: Edit — Admin/Logistics only
         [Authorize(Roles = "Admin,LogisticsManager")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -138,7 +137,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             contract.Status = model.Status;
             contract.ServiceLevel = model.ServiceLevel;
 
-            // ✅ FIX — Only replace PDF if a new one was uploaded; otherwise keep the existing one
             if (model.SignedAgreementFile != null)
             {
                 try
@@ -158,7 +156,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("Index", "Admin");
         }
 
-        // POST: Delete — Admin only (changed from GET — deleting on GET is dangerous)
+        // (changed from GET — deleting on GET is dangerous)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -169,7 +167,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             if (contract == null)
                 return NotFound();
 
-            // Guard: Active contracts cannot be deleted
+            // the handling: Active contracts cannot be deleted
             if (contract.Status == "Active")
             {
                 TempData["Error"] = "Active contracts cannot be deleted. Change the status to Draft or Expired first.";
@@ -192,7 +190,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
 
             if (contract == null) return NotFound();
 
-            // ✅ Clients can only view their own contracts
+            //access control Clients can only view their own contracts
             if (User.IsInRole("Client"))
             {
                 var user = await _userManager.GetUserAsync(User);

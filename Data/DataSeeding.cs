@@ -10,39 +10,57 @@ namespace ST10448420_TechMove_GLMS.Data
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-            // Access the DbContext to seed the Client table
             var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
-
-            // 1. Seed the Roles
+// role seeding
             string[] roles = { "Admin", "LogisticsManager", "Client" };
+
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
                     await roleManager.CreateAsync(new IdentityRole(role));
             }
+// client seeding 
+            var clientsToSeed = new List<Client>
+    {
+        new Client
+        {
+            Name = "Samsung Electronics",
+            ContactDetails = "contact@samsung.com",
+            Region = "Gauteng"
+        },
+        new Client
+        {
+            Name = "CheckersZA",
+            ContactDetails = "userZA@checkers.com | +27 11 549 1234",
+            Region = "Kwa-Zulu Natal"
+        },
+        new Client
+        {
+            Name = "Batman Distribution",
+            ContactDetails = "batman@distribution.com | +27 21 880 5678",
+            Region = "Western Cape"
+        }
+    };
 
-            // 2. Seed a Default Client Company (TechMove Partner)
-            // We check if any client exists; if not, we create one.
-            if (!context.Clients.Any())
+            foreach (var client in clientsToSeed)
             {
-                context.Clients.Add(new Client
+                if (!context.Clients.Any(c => c.Name == client.Name))
                 {
-                    Name = "Samsung Electronics",
-                    ContactDetails = "contact@samsung.com",
-                    Region = "Gauteng"
-                });
-                await context.SaveChangesAsync();
+                    context.Clients.Add(client);
+                }
             }
 
-            // Get the ID of the client we just ensured exists
-            var defaultClient = await context.Clients.FirstOrDefaultAsync(c => c.Name == "Samsung Electronics");
+            await context.SaveChangesAsync();
 
-            //Seed Default Admin User
+            var samsung = await context.Clients.FirstOrDefaultAsync(c => c.Name == "Samsung Electronics");
+            var checkers = await context.Clients.FirstOrDefaultAsync(c => c.Name == "CheckersZA");
+            var batman = await context.Clients.FirstOrDefaultAsync(c => c.Name == "Batman Distribution");
+
             var adminEmail = "admin@techmove.com";
-            var admin = await userManager.FindByEmailAsync(adminEmail);
-            if (admin == null)
+
+            if (await userManager.FindByEmailAsync(adminEmail) == null)
             {
-                admin = new ApplicationUser
+                var admin = new ApplicationUser
                 {
                     UserName = adminEmail,
                     Email = adminEmail,
@@ -53,34 +71,63 @@ namespace ST10448420_TechMove_GLMS.Data
                 await userManager.AddToRoleAsync(admin, "Admin");
             }
 
-            //Seed a Default Client User (Linked to Samsung)
-            var clientEmail = "user@samsung.com";
-            var clientUser = await userManager.FindByEmailAsync(clientEmail);
-            if (clientUser == null && defaultClient != null)
+
+            var samsungUserEmail = "user@samsung.com";
+
+            if (await userManager.FindByEmailAsync(samsungUserEmail) == null && samsung != null)
             {
-                clientUser = new ApplicationUser
+                var user = new ApplicationUser
                 {
-                    UserName = clientEmail,
-                    Email = clientEmail,
+                    UserName = samsungUserEmail,
+                    Email = samsungUserEmail,
                     EmailConfirmed = true,
-                    // Linking the user to the company
-                    ClientID = defaultClient.ClientID
+                    ClientID = samsung.ClientID 
                 };
 
-                var result = await userManager.CreateAsync(clientUser, "Client123!");
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(clientUser, "Client");
-                }
+                await userManager.CreateAsync(user, "Client123!");
+                await userManager.AddToRoleAsync(user, "Client");
             }
-            var logisticsEmail = "manager@techmove.com";
 
-            if (await userManager.FindByEmailAsync(logisticsEmail) == null)
+
+            var checkersEmail = "user@checkers.com";
+
+            if (await userManager.FindByEmailAsync(checkersEmail) == null && checkers != null)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = checkersEmail,
+                    Email = checkersEmail,
+                    EmailConfirmed = true,
+                    ClientID = checkers.ClientID 
+                };
+
+                await userManager.CreateAsync(user, "Client123!");
+                await userManager.AddToRoleAsync(user, "Client");
+            }
+            var batmanEmail = "user.batman@distribution.com";
+            if (await userManager.FindByEmailAsync(batmanEmail) == null && batman != null)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = batmanEmail,
+                    Email = batmanEmail,
+                    EmailConfirmed = true,
+                    ClientID = batman.ClientID
+                };
+
+                await userManager.CreateAsync(user, "Client123!");
+                await userManager.AddToRoleAsync(user, "Client");
+            }
+
+            // manager, not used. was added before i understood the application logic
+            var managerEmail = "manager@techmove.com";
+
+            if (await userManager.FindByEmailAsync(managerEmail) == null)
             {
                 var manager = new ApplicationUser
                 {
-                    UserName = logisticsEmail,
-                    Email = logisticsEmail,
+                    UserName = managerEmail,
+                    Email = managerEmail,
                     EmailConfirmed = true
                 };
 

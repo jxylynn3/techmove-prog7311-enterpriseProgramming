@@ -16,7 +16,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
         private readonly ApplicationDbContext _context;
         private readonly CurrencyApiService _currencyService;
         private readonly PDFManagementService _pdfService;
-        private readonly UserManager<ApplicationUser> _userManager;  // ✅ Added
+        private readonly UserManager<ApplicationUser> _userManager;  
 
         public ServiceRequestController(
             ApplicationDbContext context,
@@ -30,7 +30,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             _userManager = userManager;
         }
 
-        // ✅ FIX #12 — Index now loads the client's own service requests
+
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
@@ -44,7 +44,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(requests);
         }
 
-        // GET: Create — checks contract state before allowing access
         [HttpGet]
         public async Task<IActionResult> Create(int contractId)
         {
@@ -54,7 +53,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             if (contract == null || contract.ClientID != user.ClientID)
                 return NotFound();
 
-            // ✅ FIX #6 — Use the State pattern correctly via CurrentState property
+            // the state pattern is used to check that the contract created is in the right status to create a service request
             if (!contract.CurrentState.contractCanRaiseServiceRequest())
             {
                 TempData["Error"] = $"Cannot create a service request. Your contract status is '{contract.Status}'. It must be Active.";
@@ -64,7 +63,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(new ServiceRequestViewModel { ContractID = contractId });
         }
 
-        // POST: Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ServiceRequestViewModel model)
@@ -84,7 +82,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             var rate = await _currencyService.GetRateAsync();
             var costZAR = model.CostUSD * rate;
 
-            // ✅ FIX #5 — File is optional; only save if provided
             string? filePath = null;
             if (model.File != null)
             {
@@ -115,7 +112,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("Index");
         }
 
-        // ✅ FIX — Edit GET (was completely missing)
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -138,7 +134,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(vm);
         }
 
-        // ✅ FIX — Edit POST (was completely missing)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ServiceRequestViewModel model)

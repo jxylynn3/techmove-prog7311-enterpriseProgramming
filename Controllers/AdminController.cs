@@ -18,15 +18,14 @@ namespace ST10448420_TechMove_GLMS.Controllers
         public AdminController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)      // ✅ Added RoleManager
+            RoleManager<IdentityRole> roleManager)    //added to manage user roles within the admin panel
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
         }
 
-        // ===== DASHBOARD =====
-        // Admin dashboard: lists contracts with search/filter
+
         public IActionResult Index(string search, string status, DateTime? startDate, DateTime? endDate)
         {
             var query = _context.Contracts.Include(c => c.Client).AsQueryable();
@@ -36,8 +35,8 @@ namespace ST10448420_TechMove_GLMS.Controllers
 
             if (!string.IsNullOrEmpty(status))
                 query = query.Where(c => c.Status == status);
-
-            // ✅ FIX #10 — Date range filter added
+            // below is the Date range filtering logic, that basically  uses the query WHERE clause to filter contracts based on their StartDate and EndDate properties.
+            //like in SQL 
             if (startDate.HasValue)
                 query = query.Where(c => c.StartDate >= startDate.Value);
 
@@ -52,8 +51,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(query.ToList());
         }
 
-        // ===== CONTRACT STATUS =====
-        // ✅ FIX #9 — Now POST only. Status passed via form, not query string.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeStatus(int id, string status)
@@ -67,8 +64,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("Index");
         }
 
-        // ===== USER MANAGEMENT =====
-        // ✅ FIX #8 — Consolidated ManageUsers showing roles + client
+// Consolidated ManageUsers showing roles + client
         // AdminController.cs
         [HttpGet]
         public async Task<IActionResult> ManageUsers()
@@ -90,7 +86,6 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return View(model); // passes List<UserWithRoleViewModel>
         }
 
-        // ✅ FIX #8 — User details
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UserDetails(string id)
         {
@@ -293,7 +288,8 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("ServiceRequests");
         }
 
-        // ✅ FIX #8 — Delete Service Request POST, with Active-contract guard
+        // the deletion logic for service requests was missing before — now added, with Active-contract rules
+        // [the rules: Admin cannot delete a service request linked to an Active contract]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteServiceRequest(int id)
@@ -304,7 +300,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
 
             if (req == null) return NotFound();
 
-            // Guard: Admin cannot delete a service request tied to an Active contract
+            // error handling Admin cannot delete a service request tied to an Active contract
             if (req.Contract?.Status == "Active")
             {
                 TempData["Error"] = "Cannot delete a service request linked to an Active contract.";
@@ -317,7 +313,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("ServiceRequests");
         }
 
-        // ✅ FIX #10 — Approve/Reject changed to POST
+        // the approvl and rejection logic for service requests was missing before — now added, with simple status update and redirect back to list
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Approve(int id)

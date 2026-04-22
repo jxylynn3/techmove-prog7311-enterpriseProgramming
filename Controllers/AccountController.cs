@@ -66,7 +66,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
         {
             return View();
         }
-        public IActionResult AccessDenied()
+        public IActionResult AccessDenied() // this is here so that if a user tries to access a page they don't have permission for, they get a nice message instead of an error
         {
             return View();
         }
