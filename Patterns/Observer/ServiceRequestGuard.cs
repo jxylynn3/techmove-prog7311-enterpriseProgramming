@@ -1,4 +1,5 @@
 ﻿using ST10448420_TechMove_GLMS.Models;
+using System.Diagnostics.CodeAnalysis;
 
 
 namespace ST10448420_TechMove_GLMS.Patterns.Observer
@@ -35,3 +36,5 @@ namespace ST10448420_TechMove_GLMS.Patterns.Observer
         }
     }
 }
+//what does the Observer pattern do in this context?
+// its basically a pattern that makes the application more flexible by allowing different parts of the application to react to changes in the contract status without breaking the app.

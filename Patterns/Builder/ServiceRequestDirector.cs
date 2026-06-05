@@ -49,3 +49,7 @@ namespace ST10448420_TechMove_GLMS.Patterns.Builder
         }
     }
 }
+//what does the builder do within this application?
+// The Builder pattern in this application is used to construct complex ServiceRequest objects step by step.
+// The ServiceRequestDirector class orchestrates the construction process, ensuring that all necessary properties of a ServiceRequest are set correctly. 
+// allows for the service request to have a clear and consistent way of being created, especially when there are multiple properties that need to be set, such as contract ID, description, costs in both USD and ZAR, and the file path for the associated document.

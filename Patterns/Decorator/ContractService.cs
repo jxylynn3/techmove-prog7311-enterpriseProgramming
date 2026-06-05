@@ -11,3 +11,6 @@ namespace ST10448420_TechMove_GLMS.Patterns.Decorator
         }
     }
 }
+// what is the purpose of the Decorator pattern in this context?
+// its a structural design pattern that allows behavior to be added to individual objects, either statically or dynamically, without affecting the behavior of other objects from the same class.
+// In this context, it allows us to add additional functionality (like logging) to the contract service without modifying the original ContractService class

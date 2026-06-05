@@ -26,4 +26,5 @@
             return _rate;
         }
     }
-}
+}// used for the API logic to get the exchange rate for currency conversion in the ServiceRequestBuilder.
+ // By using the Singleton pattern, we ensure that there is only one instance of the ExchangeRates class throughout the application, which can be accessed globally.

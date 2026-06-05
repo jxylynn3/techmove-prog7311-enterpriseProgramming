@@ -1,23 +1,40 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ST10448420_TechMove_GLMS.ApiServices;
 using ST10448420_TechMove_GLMS.Models;
 using ST10448420_TechMove_GLMS.Models.ViewModels;
+using System.Security.Claims;
 
 namespace ST10448420_TechMove_GLMS.Controllers
+//jayy from part 03: previously UserManager + SignInManager had direct DB Identity access,but
+//now  we call the API's /api/auth/login endpoint for JWT, then creates
+//a cookie-based identity so MVC [Authorize] attributes still work.
 {
     public class AccountController : Controller
     {
+        private readonly ApiAuthService _authService;
+        //commenting out from Part 02!!
         // DI that allows us to manage users, sign in and out, and manage roles
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
 
+        /*private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager; 
+        
         public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
         }
+        */
+
+        public AccountController(ApiAuthService authService)
+        {
+            _authService = authService;
+        }
+
         [HttpGet]
         public IActionResult Login() => View();
 
@@ -26,49 +43,62 @@ namespace ST10448420_TechMove_GLMS.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
+            //commenting out from Part 02!!
+            // var user = await _userManager.FindByEmailAsync(model.Email);
+            // var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
 
-            if (user == null)
+            var (token, roles, error) = await _authService.LoginAsync(model.Email, model.Password);
+
+            if (error != null)
             {
-                ModelState.AddModelError("", "Invalid login");
+                ModelState.AddModelError("", error);
                 return View(model);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(
-                user, model.Password, false, false);
+            // Store JWT in session so ApiServices can attach it to future calls
+            HttpContext.Session.SetString("JwtToken", token!);
 
-            if (result.Succeeded)
+            // Build a cookie identity so MVC [Authorize(Roles=...)] keeps working
+            var claims = new List<Claim>
             {
-                //role based redirection after login
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    return RedirectToAction("Index", "Admin");
+                new Claim(ClaimTypes.Name,  model.Email),
+                new Claim(ClaimTypes.Email, model.Email),
+            };
+            claims.AddRange((roles ?? new()).Select(r => new Claim(ClaimTypes.Role, r)));
 
-                if (await _userManager.IsInRoleAsync(user, "LogisticsManager"))
-                    return RedirectToAction("Index", "Admin");
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                if (await _userManager.IsInRoleAsync(user, "Client"))
-                    return RedirectToAction("Index", "ClientDashboard");
-            }
+            // Role-based redirect (same logic as Part 2)
+            if (roles!.Contains("Admin") || roles.Contains("LogisticsManager"))
+                return RedirectToAction("Index", "Admin");
 
-            ModelState.AddModelError("", "Invalid login attempt");
-            return View(model);
+            if (roles.Contains("Client"))
+                return RedirectToAction("Index", "ClientDashboard");
+
+            return RedirectToAction("Index", "Home");
         }
 
-        [HttpPost]
+
+        /*[HttpPost]
         public async Task<IActionResult> Logout()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
-    
-        public IActionResult Index()
+        */ // replaced by the new Logout method below, which also clears the JWT from session
+        [HttpPost]
+        public async Task<IActionResult> Logout()
         {
-            return View();
+            HttpContext.Session.Remove("JwtToken");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
         }
-        public IActionResult AccessDenied() // this is here so that if a user tries to access a page they don't have permission for, they get a nice message instead of an error
-        {
-            return View();
-        }
+        public IActionResult Index() => View(); // this is here so that if a user tries to access /Account, they get a nice page instead of an error
+
+        public IActionResult AccessDenied() => View(); // this is here so that if a user tries to access a page they don't have permission for, they get a nice message instead of an error
+
     }
 }
