@@ -1,4 +1,7 @@
-﻿@model List<ST10448420_TechMove_GLMS.Models.Contract>
+﻿@* Part 3 refactor: model changed from List<Contract> (EF entity) to List<ContractApiDTO>
+   because AdminController.Index now fetches data from the API, not the database directly.
+   c.Client?.Name is replaced with c.ClientName (the DTO includes client name already). *@
+@model List<ST10448420_TechMove_GLMS.ApiServices.ContractApiDTO>
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
@@ -13,11 +16,16 @@
 {
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-warning">@ViewBag.Error</div>
+}
 
 <!-- Search & Filter Form -->
 <form method="get" asp-action="Index" class="row g-2 mb-3">
     <div class="col-md-3">
-        <input type="text" name="search" class="form-control" placeholder="Client name..." value="@ViewBag.Search" />
+        <input type="text" name="search" class="form-control" placeholder="Client name..."
+               value="@ViewBag.Search" />
     </div>
     <div class="col-md-2">
         <select name="status" class="form-select">
@@ -27,12 +35,6 @@
             <option value="OnHold" selected="@(ViewBag.Status == "OnHold")">On Hold</option>
             <option value="Expired" selected="@(ViewBag.Status == "Expired")">Expired</option>
         </select>
-    </div>
-    <div class="col-md-2">
-        <input type="date" name="startDate" class="form-control" value="@ViewBag.StartDate" />
-    </div>
-    <div class="col-md-2">
-        <input type="date" name="endDate" class="form-control" value="@ViewBag.EndDate" />
     </div>
     <div class="col-md-1">
         <button type="submit" class="btn btn-primary w-100">Filter</button>
@@ -65,7 +67,8 @@
         {
             <tr>
                 <td>@c.ContractID</td>
-                <td>@c.Client?.Name</td>
+                @* Part 3: c.ClientName replaces c.Client?.Name — DTO carries this directly *@
+                <td>@c.ClientName</td>
                 <td>@c.StartDate.ToString("dd MMM yyyy")</td>
                 <td>@c.EndDate.ToString("dd MMM yyyy")</td>
                 <td>
@@ -75,18 +78,20 @@
                 </td>
                 <td>@c.ServiceLevel</td>
                 <td>
-                    <a asp-controller="Contract" asp-action="Details" asp-route-id="@c.ContractID" class="btn btn-sm btn-info">View</a>
-                    <a asp-controller="Contract" asp-action="Edit" asp-route-id="@c.ContractID" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-controller="Contract" asp-action="Details" asp-route-id="@c.ContractID"
+                       class="btn btn-sm btn-info">View</a>
+                    <a asp-controller="Contract" asp-action="Edit" asp-route-id="@c.ContractID"
+                       class="btn btn-sm btn-warning">Edit</a>
 
-                    <!-- Change Status -->
+                    <!-- Change Status — calls AdminController.ChangeStatus via API -->
                     <form asp-action="ChangeStatus" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@c.ContractID" />
                         <select name="status" class="form-select form-select-sm d-inline w-auto">
-                            <option value="Draft">Draft</option>
-                            <option value="Active">Active</option>
-                            <option value="OnHold">On Hold</option>
-                            <option value="Expired">Expired</option>
+                            <option value="Draft" selected="@(c.Status == "Draft")">Draft</option>
+                            <option value="Active" selected="@(c.Status == "Active")">Active</option>
+                            <option value="OnHold" selected="@(c.Status == "OnHold")">On Hold</option>
+                            <option value="Expired" selected="@(c.Status == "Expired")">Expired</option>
                         </select>
                         <button type="submit" class="btn btn-sm btn-secondary">Set</button>
                     </form>

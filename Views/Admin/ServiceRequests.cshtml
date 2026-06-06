@@ -1,4 +1,8 @@
-﻿@model List<ST10448420_TechMove_GLMS.Models.ServiceRequest>
+﻿@* Part 3 refactor: model changed from List<ServiceRequest> (EF entity) to
+   List<ServiceRequestApiDTO> because AdminController.ServiceRequests now fetches
+   data from the API. Navigation property r.Contract?.Client?.Name is no longer
+   available on the DTO — the contract ID is shown instead. *@
+@model List<ST10448420_TechMove_GLMS.ApiServices.ServiceRequestApiDTO>
 @{
     ViewData["Title"] = "All Service Requests";
 }
@@ -13,6 +17,10 @@
 {
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-warning">@ViewBag.Error</div>
+}
 
 <a asp-action="Index" class="btn btn-outline-secondary mb-3">← Dashboard</a>
 
@@ -20,7 +28,7 @@
     <thead class="table-dark">
         <tr>
             <th>#</th>
-            <th>Client</th>
+            <th>Contract ID</th>
             <th>Description</th>
             <th>Cost (USD)</th>
             <th>Cost (ZAR)</th>
@@ -34,10 +42,12 @@
         {
             <tr>
                 <td>@r.RequestID</td>
-                <td>@r.Contract?.Client?.Name</td>
+                @* Part 3: ContractID shown instead of r.Contract?.Client?.Name
+                   because the DTO does not carry the full navigation graph *@
+                <td>Contract #@r.ContractID</td>
                 <td>@r.Description</td>
                 <td>$@r.CostUSD.ToString("N2")</td>
-                <td>@String.Format("R {0:N2}", r.CostZAR)</td>
+                <td>R @r.CostZAR.ToString("N2")</td>
                 <td>
                     <span class="badge bg-@(r.Status == "Approved" ? "success" : r.Status == "Rejected" ? "danger" : r.Status == "Draft" ? "secondary" : "warning")">
                         @r.Status
@@ -45,10 +55,7 @@
                 </td>
                 <td>@r.CreatedAt.ToString("dd MMM yyyy")</td>
                 <td>
-                    <a asp-action="ServiceRequestDetails" asp-route-id="@r.RequestID" class="btn-view">View</a>
-                    <a asp-action="EditServiceRequest" asp-route-id="@r.RequestID" class="btn btn-sm btn-warning">Edit</a>
-
-                    <!-- Approve/Reject -->
+                    <!-- Approve -->
                     <form asp-action="Approve" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@r.RequestID" />
@@ -57,19 +64,14 @@
                             Approve
                         </button>
                     </form>
+                    <!-- Reject -->
                     <form asp-action="Reject" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@r.RequestID" />
-                        <button type="submit" class="btn btn-sm btn-secondary"
+                        <button type="submit" class="btn btn-sm btn-danger"
                                 onclick="return confirm('Reject this request?')">
                             Reject
                         </button>
-                    </form>
-                    <form asp-action="DeleteServiceRequest" method="post" class="d-inline"
-                          onsubmit="return confirm('Delete this request? This cannot be undone.')">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@r.RequestID" />
-                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                     </form>
                 </td>
             </tr>

@@ -1,4 +1,7 @@
-﻿@model List<ST10448420_TechMove_GLMS.Models.Contract>
+﻿@* Part 3 refactor: model changed from List<Contract> (EF entity) to List<ContractApiDTO>.
+   c.Client?.Name replaced with c.ClientName (included in the DTO).
+   c.CurrentState reference removed — not available on DTOs. *@
+@model List<ST10448420_TechMove_GLMS.ApiServices.ContractApiDTO>
 @{
     ViewData["Title"] = "Contracts";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -12,17 +15,26 @@
 {
     <div class="alert alert-success">@TempData["Success"]</div>
 }
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-warning">@ViewBag.Error</div>
+}
 
 <div style="padding:1.5rem 0">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem">
         <div>
-            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:#21295C">Contracts</div>
-            <div style="font-size:12px;color:rgba(27,59,111,.45);margin-top:2px">@Model.Count total</div>
+            <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:#21295C">
+                Contracts
+            </div>
+            <div style="font-size:12px;color:rgba(27,59,111,.45);margin-top:2px">
+                @Model.Count total
+            </div>
         </div>
         <a asp-action="Create" class="btn btn-primary">+ New contract</a>
     </div>
 
-    <div class="table-responsive" style="border-radius:10px;border:1px solid rgba(6,90,130,.1);overflow:hidden">
+    <div class="table-responsive"
+         style="border-radius:10px;border:1px solid rgba(6,90,130,.1);overflow:hidden">
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
@@ -39,22 +51,28 @@
                 @foreach (var r in Model)
                 {
                     <tr>
-                        <td style="color:rgba(27,59,111,.35);font-size:11px">@r.ContractID.ToString("D3")</td>
-                        <td><strong>@r.Client?.Name</strong></td>
+                        <td style="color:rgba(27,59,111,.35);font-size:11px">
+                            @r.ContractID.ToString("D3")
+                        </td>
+                        @* Part 3: ClientName replaces r.Client?.Name *@
+                        <td><strong>@r.ClientName</strong></td>
                         <td>@r.ServiceLevel</td>
                         <td>@r.StartDate.ToString("dd MMM yyyy")</td>
                         <td>@r.EndDate.ToString("dd MMM yyyy")</td>
-                        <td><span class="badge badge-@r.Status.ToLower()">@r.Status</span></td>
+                        <td>
+                            <span class="badge badge-@r.Status.ToLower()">@r.Status</span>
+                        </td>
                         <td>
                             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                                <a asp-action="Details" asp-route-id="@r.ContractID" class="btn btn-view btn-sm">View</a>
-                                <a asp-action="Edit" asp-route-id="@r.ContractID" class="btn btn-edit btn-sm">Edit</a>
+                                <a asp-action="Details" asp-route-id="@r.ContractID"
+                                   class="btn btn-view btn-sm">View</a>
+                                <a asp-action="Edit" asp-route-id="@r.ContractID"
+                                   class="btn btn-edit btn-sm">Edit</a>
 
                                 @* Delete — disabled for Active contracts *@
                                 @if (r.Status == "Active")
                                 {
-                                    <button class="btn btn-sm btn-delete"
-                                            disabled
+                                    <button class="btn btn-sm btn-delete" disabled
                                             title="Cannot delete an Active contract"
                                             style="opacity:.35;cursor:not-allowed">
                                         Delete
@@ -73,9 +91,10 @@
                                     </form>
                                 }
 
-                                @* Status change form *@
+                                @* Status change — calls AdminController.ChangeStatus via API *@
                                 <form asp-controller="Admin" asp-action="ChangeStatus"
-                                      method="post" style="display:inline;display:flex;gap:4px;align-items:center">
+                                      method="post"
+                                      style="display:inline;display:flex;gap:4px;align-items:center">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="id" value="@r.ContractID" />
                                     <select name="status" class="form-select form-select-sm"

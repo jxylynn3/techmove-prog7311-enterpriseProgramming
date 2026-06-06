@@ -1,4 +1,6 @@
-﻿@model List<ST10448420_TechMove_GLMS.Models.ServiceRequest>
+﻿@* Part 3 refactor: model changed from List<ServiceRequest> (EF entity) to
+   List<ServiceRequestApiDTO>. All property names are the same. *@
+@model List<ST10448420_TechMove_GLMS.ApiServices.ServiceRequestApiDTO>
 @{
     ViewData["Title"] = "My Service Requests";
 }
@@ -9,8 +11,13 @@
 {
     <div class="alert alert-success">@TempData["Success"]</div>
 }
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-warning">@ViewBag.Error</div>
+}
 
-<a asp-controller="ClientDashboard" asp-action="Index" class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
+<a asp-controller="ClientDashboard" asp-action="Index"
+   class="btn btn-outline-secondary mb-3">← Back to Dashboard</a>
 
 @if (!Model.Any())
 {
@@ -22,12 +29,12 @@ else
         <thead class="table-dark">
             <tr>
                 <th>#</th>
+                <th>Contract</th>
                 <th>Description</th>
                 <th>Cost (USD)</th>
                 <th>Cost (ZAR)</th>
                 <th>Status</th>
                 <th>Created</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +42,7 @@ else
             {
                 <tr>
                     <td>@r.RequestID</td>
+                    <td>Contract #@r.ContractID</td>
                     <td>@r.Description</td>
                     <td>$@r.CostUSD.ToString("N2")</td>
                     <td>R @r.CostZAR.ToString("N2")</td>
@@ -44,9 +52,6 @@ else
                         </span>
                     </td>
                     <td>@r.CreatedAt.ToString("dd MMM yyyy")</td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@r.RequestID" class="btn btn-sm btn-warning">Edit</a>
-                    </td>
                 </tr>
             }
         </tbody>

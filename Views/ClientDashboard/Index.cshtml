@@ -1,4 +1,12 @@
-﻿@model List<ST10448420_TechMove_GLMS.Models.Contract>
+﻿@* Part 3 refactor: model changed from List<Contract> (EF entity with navigation properties)
+   to List<ContractApiDTO>. Key changes:
+   - c.Client?.Name → no longer needed; ClientName is in the DTO
+   - c.CurrentState.contractCanRaiseServiceRequest() → replaced with a simple status check
+     because the DTO is a plain data object and doesn't carry the State Pattern.
+     The State Pattern enforcement still happens server-side in the API — this is just
+     the view deciding whether to show the button, as a UX hint.
+   - c.ServiceRequests?.Count → removed because the DTO does not include the collection *@
+@model List<ST10448420_TechMove_GLMS.ApiServices.ContractApiDTO>
 @{
     ViewData["Title"] = "My Dashboard";
 }
@@ -13,9 +21,15 @@
 {
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-warning">@ViewBag.Error</div>
+}
 
 <div class="d-flex gap-2 mb-4">
-    <a asp-controller="ServiceRequest" asp-action="Index" class="btn btn-outline-info">My Service Requests</a>
+    <a asp-controller="ServiceRequest" asp-action="Index" class="btn btn-outline-info">
+        My Service Requests
+    </a>
 </div>
 
 <h4>My Contracts</h4>
@@ -38,30 +52,40 @@ else
                         </span>
                     </div>
                     <div class="card-body">
+                        <p class="mb-1"><strong>Client:</strong> @c.ClientName</p>
                         <p class="mb-1"><strong>Service Level:</strong> @c.ServiceLevel</p>
-                        <p class="mb-1"><strong>From:</strong> @c.StartDate.ToString("dd MMM yyyy") — <strong>To:</strong> @c.EndDate.ToString("dd MMM yyyy")</p>
-                        <p class="mb-1"><strong>Service Requests:</strong> @(c.ServiceRequests?.Count ?? 0)</p>
+                        <p class="mb-1">
+                            <strong>From:</strong> @c.StartDate.ToString("dd MMM yyyy")
+                            &mdash;
+                            <strong>To:</strong> @c.EndDate.ToString("dd MMM yyyy")
+                        </p>
                     </div>
                     <div class="card-footer d-flex gap-2 flex-wrap">
                         <a asp-controller="Contract" asp-action="Details" asp-route-id="@c.ContractID"
                            class="btn btn-sm btn-outline-primary">View Contract</a>
 
                         <a href="@c.SignedAgreementFilePath" target="_blank"
-                           class="btn btn-sm btn-outline-secondary">📄 Download PDF</a>
+                           class="btn btn-sm btn-outline-secondary">Download PDF</a>
 
                         <a asp-controller="Contract" asp-action="ReuploadPdf" asp-route-id="@c.ContractID"
-                           class="btn btn-sm btn-outline-warning">🔄 Re-upload PDF</a>
+                           class="btn btn-sm btn-outline-warning">Re-upload PDF</a>
 
-                        @if (c.CurrentState.contractCanRaiseServiceRequest())
+                        @* Part 3: State Pattern check is now a simple status string comparison.
+                           The real enforcement still happens in the API (ServiceRequestService.CreateAsync
+                           calls contract.CurrentState.contractCanRaiseServiceRequest()).
+                           This button is purely a UX hint — if the user clicks it on a non-Active
+                           contract, the API will return 400 and the MVC will show the error. *@
+                        @if (c.Status == "Active")
                         {
-                            <a asp-controller="ServiceRequest" asp-action="Create" asp-route-contractId="@c.ContractID"
+                            <a asp-controller="ServiceRequest" asp-action="Create"
+                               asp-route-contractId="@c.ContractID"
                                class="btn btn-sm btn-success">+ Service Request</a>
                         }
                         else
                         {
                             <span class="btn btn-sm btn-outline-danger disabled"
                                   title="Contract must be Active to raise a service request">
-                                Service Request Blocked
+                                Service Request Blocked (@c.Status)
                             </span>
                         }
                     </div>
