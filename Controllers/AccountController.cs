@@ -68,12 +68,11 @@ namespace ST10448420_TechMove_GLMS.Controllers
             // This is the scheme AddIdentity registered. Using "Cookies" fails because
             // AddIdentity does not register a handler for that name.
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name,  model.Email),
-                new Claim(ClaimTypes.Email, model.Email),
-            };
+{
+    new Claim(ClaimTypes.Name,  model.Email),
+    new Claim(ClaimTypes.Email, model.Email),
+};
             claims.AddRange(userRoles.Select(r => new Claim(ClaimTypes.Role, r)));
-
             var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
             var principal = new ClaimsPrincipal(identity);
 

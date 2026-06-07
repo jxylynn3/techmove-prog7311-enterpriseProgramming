@@ -30,7 +30,8 @@ namespace ST10448420_TechMove_GLMS.ApiServices
             var client = _httpClientFactory.CreateClient("GlmsApi");
             var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
             if (!string.IsNullOrEmpty(token))
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
             return client;
         }
 
@@ -71,12 +72,14 @@ namespace ST10448420_TechMove_GLMS.ApiServices
             }
         }
 
-        public async Task<(ContractApiDTO? contract, string? error)> CreateContractAsync(CreateContractApiDTO _dto)
+        public async Task<(ContractApiDTO? contract, string? error)> CreateContractAsync(
+            CreateContractApiDTO _dto)
         {
             try
             {
                 var client = CreateAuthenticatedClient();
-                var content = new StringContent(JsonSerializer.Serialize(_dto), Encoding.UTF8, "application/json");
+                var content = new StringContent(
+                    JsonSerializer.Serialize(_dto), Encoding.UTF8, "application/json");
                 var response = await client.PostAsync("api/contracts", content);
 
                 if (!response.IsSuccessStatusCode)
@@ -119,27 +122,8 @@ namespace ST10448420_TechMove_GLMS.ApiServices
         }
     }
 
-    //this will be used by the MVC to display the contract data,while also making it easier to deserialize the API responses.
-    //It also allows us to decouple the API's internal data model from what the MVC needs, which is good for flexibility and security.
-    public class ContractApiDTO
-    {//same as the ContractDTO in the API project, but with ClientName added for easier display in the MVC views without extra API calls.
-        public int ContractID { get; set; }
-        public int ClientID { get; set; }
-        public string ClientName { get; set; } = string.Empty;
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public string Status { get; set; } = string.Empty;
-        public string ServiceLevel { get; set; } = string.Empty;
-        public string SignedAgreementFilePath { get; set; } = string.Empty;
-    }
-
-    public class CreateContractApiDTO
-    {//same as internal ContractCreateDTO in the API project, but without the ClientName since it's not needed for creation and will be ignored by the API anyway.
-        public int ClientID { get; set; }
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public string Status { get; set; } = "Draft";
-        public string ServiceLevel { get; set; } = string.Empty;
-        public string SignedAgreementFilePath { get; set; } = string.Empty;
-    }
+    // ── DTO CLASSES REMOVED FROM THIS FILE ───────────────────────────────────
+    // ContractApiDTO and CreateContractApiDTO have been moved to ApiDTOs.cs
+    // so that all MVC DTOs live in one place and are found by any file in the
+    // ST10448420_TechMove_GLMS.ApiServices namespace without ambiguity.
 }

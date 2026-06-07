@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using ST10448420_TechMove_GLMS.ApiServices;
 using ST10448420_TechMove_GLMS.Data;
 using ST10448420_TechMove_GLMS.Models;
-//using ST10448420_TechMove_GLMS.UtilsServices; // commented out — moved to API project in Part 3
+using ST10448420_TechMove_GLMS.UtilsServices; // Re-enabled in Part 3 — ContractController still needs PDFManagementService
+                                              // for local file uploads. PDF creation was NOT moved to the API because
+                                              // the API receives JSON, not multipart form data.
 
 namespace ST10448420_TechMove_GLMS
 {
@@ -17,7 +19,8 @@ namespace ST10448420_TechMove_GLMS
             // ── DATABASE — kept for UserManager/RoleManager in AdminController ──────────────
             // The MVC no longer uses DbContext for contracts or service requests.
             // Only kept so UserManager<ApplicationUser> and RoleManager<IdentityRole> work
-            // for the Admin panel's user management pages.
+            // for the Admin panel's user management pages, and so ContractController can
+            // load the Clients list for its Create/Edit dropdowns.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -56,9 +59,14 @@ namespace ST10448420_TechMove_GLMS
             //     options.LoginPath = "/Account/Login";
             //     options.AccessDeniedPath = "/Account/AccessDenied";
             // });
-            // builder.Services.AddScoped<PDFManagementService>();    // moved to API project
             // builder.Services.AddHttpClient<CurrencyApiService>();  // moved to API project
             // ────────────────────────────────────────────────────────────────────────────────
+
+            // ── PDF SERVICE — Re-registered here for ContractController ───────────────────────
+            // ContractController still handles PDF file uploads directly (multipart form data).
+            // The API receives JSON only, so PDF saving stays in the MVC layer.
+            // builder.Services.AddScoped<PDFManagementService>();    // moved to API project (Part 02 comment kept for CI evidence)
+            builder.Services.AddScoped<PDFManagementService>(); // Re-enabled: ContractController requires this for file upload
 
             // ── SESSION — stores the JWT token so API service classes can attach it ─────────
             builder.Services.AddSession(options =>
@@ -89,6 +97,13 @@ namespace ST10448420_TechMove_GLMS
 
             var app = builder.Build();
 
+            // ── MVC DATABASE BOOTSTRAP ────────────────────────────────────────────────────────
+            // EnsureCreated() creates the MVC's LocalDB schema if it does not exist yet.
+            // This fixes "Cannot open database ST10448420_TechMove_GLMS_DB" on new machines.
+            // DataSeeding populates roles, clients, and users into the MVC database.
+            // All seed operations use guard checks (e.g. FindByEmailAsync == null) so they
+            // are safe to run on every startup without creating duplicate records.
+            //
             // ── COMMENTED OUT FROM PART 2 — seeding now done by the API project ─────────────
             // using (var scope = app.Services.CreateScope())
             // {
@@ -98,6 +113,24 @@ namespace ST10448420_TechMove_GLMS
             //     await DataSeeding.SeedData(_services);
             // }
             // ────────────────────────────────────────────────────────────────────────────────
+            // Re-enabled in Part 3: EnsureCreated + DataSeeding run for the MVC database only.
+            // The API has its own separate database (ST10448420_TechMove_GLMS_API_DB) and its
+            // own DataSeeding — these two seedings are completely independent.
+            using (var scope = app.Services.CreateScope())
+            {
+                var _services = scope.ServiceProvider;
+                var _context = _services.GetRequiredService<ApplicationDbContext>();
+                try
+                {
+                    _context.Database.EnsureCreated();
+                    await DataSeeding.SeedData(_services);
+                }
+                catch (Exception ex)
+                {
+                    var logger = _services.GetRequiredService<ILogger<Program>>();
+                    logger.LogError(ex, "An error occurred while bootstrapping the MVC database.");
+                }
+            }
 
             if (!app.Environment.IsDevelopment())
             {

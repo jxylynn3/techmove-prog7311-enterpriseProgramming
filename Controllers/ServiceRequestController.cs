@@ -1,7 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ST10448420_TechMove_GLMS.ApiServices;
-using ST10448420_TechMove_GLMS.APIServices;
+using ST10448420_TechMove_GLMS.Models;
 using ST10448420_TechMove_GLMS.Models.ViewModels;
 // using Microsoft.EntityFrameworkCore;
 // using ST10448420_TechMove_GLMS.Data;
@@ -16,21 +17,25 @@ namespace ST10448420_TechMove_GLMS.Controllers
     {
         private readonly ApiServiceRequestService _serviceRequestApiService;
         private readonly ApiContractService _contractApiService;
-        // private readonly ApplicationDbContext _context;
-        // private readonly CurrencyApiService _currencyService;
-        // private readonly PDFManagementService _pdfService;
-        // private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        // private readonly ApplicationDbContext _context;             // commented out from Part 02
+        // private readonly CurrencyApiService _currencyService;       // commented out from Part 02
+        // private readonly PDFManagementService _pdfService;          // commented out from Part 02
+        // private readonly UserManager<ApplicationUser> _userManager; // commented out from Part 02
 
         public ServiceRequestController(
             ApiServiceRequestService serviceRequestApiService,
-            ApiContractService contractApiService)
+            ApiContractService contractApiService,
+            UserManager<ApplicationUser> userManager)
         {
             _serviceRequestApiService = serviceRequestApiService;
             _contractApiService = contractApiService;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
         {
+            // Part 02 direct DB approach — commented out:
             // var user = await _userManager.GetUserAsync(User);
             // var requests = await _context.ServiceRequests
             //     .Include(r => r.Contract)
@@ -40,8 +45,35 @@ namespace ST10448420_TechMove_GLMS.Controllers
 
             try
             {
-                var requests = await _serviceRequestApiService.GetAllAsync();
-                return View(requests);
+                // Part 3: Use FindByEmailAsync instead of GetUserAsync for the same reason as
+                // ClientDashboardController — the cookie identity does not contain NameIdentifier,
+                // so GetUserAsync always returns null. FindByEmailAsync uses User.Identity.Name
+                // (the email address stored in ClaimTypes.Name) which IS present in the cookie.
+                var currentUser = await _userManager.FindByEmailAsync(User.Identity!.Name!);
+
+                if (currentUser?.ClientID == null)
+                {
+                    ViewBag.Error = "Your account is not linked to a client. Please contact the administrator.";
+                    return View(new List<ServiceRequestApiDTO>());
+                }
+
+                // Step 1: Fetch all contracts from the API and collect the IDs belonging to
+                // this client. This avoids adding a /api/servicerequests/byclient/{id} endpoint.
+                var allContracts = await _contractApiService.GetAllContractsAsync();
+
+                var myContractIds = allContracts
+                    .Where(c => c.ClientID == currentUser.ClientID!.Value)
+                    .Select(c => c.ContractID)
+                    .ToHashSet();
+
+                // Step 2: Fetch all service requests and filter to those on this client's contracts.
+                var allRequests = await _serviceRequestApiService.GetAllAsync();
+
+                var myRequests = allRequests
+                    .Where(r => myContractIds.Contains(r.ContractID))
+                    .ToList();
+
+                return View(myRequests);
             }
             catch (Exception ex)
             {
@@ -61,17 +93,16 @@ namespace ST10448420_TechMove_GLMS.Controllers
         public async Task<IActionResult> Create(ServiceRequestViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
-            //commenting out part 2
+
+            // commenting out part 2
             // var contract = await _context.Contracts.FindAsync(model.ContractID);
             // if (!contract.CurrentState.contractCanRaiseServiceRequest()) { ... }
             // var rate = await _currencyService.GetRateAsync();
             // var builder = new ServiceRequestBuilder(); ...
 
-
             // PART 3: The API now handles the state check AND currency conversion.
             // We just send the DTO; the API returns 400 with a message if the
             // contract isn't Active.
-
             var dto = new CreateServiceRequestApiDTO
             {
                 ContractID = model.ContractID,

@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-namespace ST10448420_TechMove_GLMS.APIServices
+
+namespace ST10448420_TechMove_GLMS.ApiServices
 {
-// Replaces all direct _context.ServiceRequests queries in the MVC project.
+    // Replaces all direct _context.ServiceRequests queries in the MVC project.
+    // Calls the backend Web API over HTTP. No database access here.
     public class ApiServiceRequestService
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -15,7 +16,9 @@ namespace ST10448420_TechMove_GLMS.APIServices
             PropertyNameCaseInsensitive = true
         };
 
-        public ApiServiceRequestService(IHttpClientFactory factory, IHttpContextAccessor accessor)
+        public ApiServiceRequestService(
+            IHttpClientFactory factory,
+            IHttpContextAccessor accessor)
         {
             _httpClientFactory = factory;
             _httpContextAccessor = accessor;
@@ -26,7 +29,8 @@ namespace ST10448420_TechMove_GLMS.APIServices
             var client = _httpClientFactory.CreateClient("GlmsApi");
             var token = _httpContextAccessor.HttpContext?.Session.GetString("JwtToken");
             if (!string.IsNullOrEmpty(token))
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
             return client;
         }
 
@@ -38,7 +42,8 @@ namespace ST10448420_TechMove_GLMS.APIServices
                 var response = await client.GetAsync("api/servicerequests");
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<ServiceRequestApiDTO>>(json, JsonOpts) ?? new();
+                return JsonSerializer.Deserialize<List<ServiceRequestApiDTO>>(json, JsonOpts)
+                       ?? new();
             }
             catch (Exception ex)
             {
@@ -52,24 +57,29 @@ namespace ST10448420_TechMove_GLMS.APIServices
             try
             {
                 var client = CreateAuthenticatedClient();
-                var response = await client.GetAsync($"api/servicerequests/bycontract/{contractId}");
+                var response = await client.GetAsync(
+                    $"api/servicerequests/bycontract/{contractId}");
                 response.EnsureSuccessStatusCode();
                 var json = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<List<ServiceRequestApiDTO>>(json, JsonOpts) ?? new();
+                return JsonSerializer.Deserialize<List<ServiceRequestApiDTO>>(json, JsonOpts)
+                       ?? new();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ApiServiceRequestService] GetByContract failed: {ex.Message}");
+                Console.WriteLine(
+                    $"[ApiServiceRequestService] GetByContract failed: {ex.Message}");
                 return new();
             }
         }
 
-        public async Task<(ServiceRequestApiDTO? _dto, string? error)> CreateAsync(CreateServiceRequestApiDTO _dto)
+        public async Task<(ServiceRequestApiDTO? dto, string? error)> CreateAsync(
+            CreateServiceRequestApiDTO _dto)
         {
             try
             {
                 var client = CreateAuthenticatedClient();
-                var content = new StringContent(JsonSerializer.Serialize(_dto), Encoding.UTF8, "application/json");
+                var content = new StringContent(
+                    JsonSerializer.Serialize(_dto), Encoding.UTF8, "application/json");
                 var response = await client.PostAsync("api/servicerequests", content);
 
                 if (!response.IsSuccessStatusCode)
@@ -79,7 +89,7 @@ namespace ST10448420_TechMove_GLMS.APIServices
                 }
 
                 var json = await response.Content.ReadAsStringAsync();
-                return (JsonSerializer.Deserialize<ServiceRequestApiDTO >(json, JsonOpts), null);
+                return (JsonSerializer.Deserialize<ServiceRequestApiDTO>(json, JsonOpts), null);
             }
             catch (Exception ex)
             {
@@ -92,10 +102,15 @@ namespace ST10448420_TechMove_GLMS.APIServices
             try
             {
                 var client = CreateAuthenticatedClient();
-                var payload = new StringContent(JsonSerializer.Serialize(new { status }), Encoding.UTF8, "application/json");
-                var response = await client.PatchAsync($"api/servicerequests/{id}/status", payload);
+                var payload = new StringContent(
+                    JsonSerializer.Serialize(new { status }),
+                    Encoding.UTF8, "application/json");
+                var response = await client.PatchAsync(
+                    $"api/servicerequests/{id}/status", payload);
+
                 if (!response.IsSuccessStatusCode)
                     return (false, $"API returned {(int)response.StatusCode}");
+
                 return (true, null);
             }
             catch (Exception ex)
@@ -104,25 +119,8 @@ namespace ST10448420_TechMove_GLMS.APIServices
             }
         }
     }
-    //These 2 mirror the API's ServiceRequestDTO and CreateServiceRequestDTO, but are separate to avoid coupling the MVC project to the API's internal models.
-    //This way if the API changes its internal models, we only need to update these DTOs and the ApiServiceRequestService, without affecting the rest of the MVC project.
-    public class ServiceRequestApiDTO
-    {
-        public int RequestID { get; set; }
-        public int ContractID { get; set; }
-        public string Description { get; set; } = string.Empty;
-        public decimal CostUSD { get; set; }
-        public decimal CostZAR { get; set; }
-        public string Status { get; set; } = string.Empty;
-        public string? DocumentPath { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
 
-    public class CreateServiceRequestApiDTO
-    {
-        public int ContractID { get; set; }
-        public string Description { get; set; } = string.Empty;
-        public decimal CostUSD { get; set; }
-        public string? DocumentPath { get; set; }
-    }
+    // ── DTO CLASSES REMOVED FROM THIS FILE ───────────────────────────────────
+    // ServiceRequestApiDTO and CreateServiceRequestApiDTO have been moved to
+    // ApiDTOs.cs so all MVC DTOs are in one discoverable place.
 }
