@@ -97,14 +97,14 @@ namespace ST10448420_TechMove_GLMS
 
             var app = builder.Build();
 
-            // ── MVC DATABASE BOOTSTRAP ────────────────────────────────────────────────────────
+            // MVC databse initialization and seeding.
             // EnsureCreated() creates the MVC's LocalDB schema if it does not exist yet.
             // This fixes "Cannot open database ST10448420_TechMove_GLMS_DB" on new machines.
             // DataSeeding populates roles, clients, and users into the MVC database.
             // All seed operations use guard checks (e.g. FindByEmailAsync == null) so they
             // are safe to run on every startup without creating duplicate records.
             //
-            // ── COMMENTED OUT FROM PART 2 — seeding now done by the API project ─────────────
+            // seeding is done by API now
             // using (var scope = app.Services.CreateScope())
             // {
             //     var _services = scope.ServiceProvider;
@@ -112,7 +112,7 @@ namespace ST10448420_TechMove_GLMS
             //     _context.Database.EnsureCreated();
             //     await DataSeeding.SeedData(_services);
             // }
-            // ────────────────────────────────────────────────────────────────────────────────
+           
             // Re-enabled in Part 3: EnsureCreated + DataSeeding run for the MVC database only.
             // The API has its own separate database (ST10448420_TechMove_GLMS_API_DB) and its
             // own DataSeeding — these two seedings are completely independent.

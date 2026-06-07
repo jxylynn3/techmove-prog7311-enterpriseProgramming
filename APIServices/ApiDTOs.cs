@@ -6,8 +6,7 @@
 
 namespace ST10448420_TechMove_GLMS.ApiServices
 {
-    // ─── CONTRACT DTOs ────────────────────────────────────────────────────────
-
+    //Contract DTOs 
     // Used when the API returns a contract (GET /api/contracts, GET /api/contracts/{id})
     public class ContractApiDTO
     {
@@ -34,8 +33,7 @@ namespace ST10448420_TechMove_GLMS.ApiServices
         public string SignedAgreementFilePath { get; set; } = string.Empty;
     }
 
-    // ─── SERVICE REQUEST DTOs ─────────────────────────────────────────────────
-
+    //Service Request DTO
     // Used when the API returns a service request
     // (GET /api/servicerequests, GET /api/servicerequests/{id})
     public class ServiceRequestApiDTO

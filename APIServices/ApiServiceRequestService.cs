@@ -35,7 +35,7 @@ namespace ST10448420_TechMove_GLMS.ApiServices
         }
 
         public async Task<List<ServiceRequestApiDTO>> GetAllAsync()
-        {
+        {// Note: In a real app, we would not fetch ALL service requests and filter in memory.
             try
             {
                 var client = CreateAuthenticatedClient();
@@ -120,7 +120,5 @@ namespace ST10448420_TechMove_GLMS.ApiServices
         }
     }
 
-    // ── DTO CLASSES REMOVED FROM THIS FILE ───────────────────────────────────
-    // ServiceRequestApiDTO and CreateServiceRequestApiDTO have been moved to
-    // ApiDTOs.cs so all MVC DTOs are in one discoverable place.
+
 }

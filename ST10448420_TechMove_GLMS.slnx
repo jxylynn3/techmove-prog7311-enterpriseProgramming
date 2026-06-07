@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="../ST10448420_TechMove_GLMS.Tests/ST10448420_TechMove_GLMS.Tests.csproj" Id="8f4f91af-620a-403c-b780-8e987bdb1f36" />
+  <Project Path="../ST10448420_TechMove_GLMS_API.Tests/ST10448420_TechMove_GLMS_API.Tests.csproj" Id="c9ed1014-1156-4d90-bc10-bc4c238f16de" />
   <Project Path="../ST10448420_TecMove_GLMS_API/ST10448420_TecMove_GLMS_API.csproj" Id="b4555457-e879-4887-ada0-b314dd184178" />
   <Project Path="ST10448420_TechMove_GLMS.csproj" />
 </Solution>

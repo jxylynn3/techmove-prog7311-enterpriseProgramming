@@ -122,8 +122,6 @@ namespace ST10448420_TechMove_GLMS.ApiServices
         }
     }
 
-    // ── DTO CLASSES REMOVED FROM THIS FILE ───────────────────────────────────
-    // ContractApiDTO and CreateContractApiDTO have been moved to ApiDTOs.cs
-    // so that all MVC DTOs live in one place and are found by any file in the
-    // ST10448420_TechMove_GLMS.ApiServices namespace without ambiguity.
+    // the DTOs used were removed from here and placded in /ApiServices/ApiDTOs.cs to keep all MVC DTOs in one place.
+   
 }

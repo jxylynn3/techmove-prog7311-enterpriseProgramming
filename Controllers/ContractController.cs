@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ST10448420_TechMove_GLMS.ApiServices;
 using ST10448420_TechMove_GLMS.Data;
 using ST10448420_TechMove_GLMS.Models;
 using ST10448420_TechMove_GLMS.Models.ViewModels;
@@ -13,27 +14,70 @@ namespace ST10448420_TechMove_GLMS.Controllers
     public class ContractController : Controller
     {
         private readonly ApplicationDbContext _context;
-        //DI injection of the PDF service and UserManager for user-related operations
-        private readonly PDFManagementService _pdfService;      
-        private readonly UserManager<ApplicationUser> _userManager; 
+        private readonly PDFManagementService _pdfService;
+        private readonly UserManager<ApplicationUser> _userManager;
+
+        // Part 3 addition: API service so Create POST writes to the API database,
+        // ensuring newly created contracts appear in the Admin dashboard which
+        // also reads from the API. Without this, contracts saved via _context go
+        // to the MVC database and never show in the admin table.
+        private readonly ApiContractService _contractApiService;
 
         public ContractController(
             ApplicationDbContext context,
             PDFManagementService pdfService,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            ApiContractService contractApiService)
         {
             _context = context;
             _pdfService = pdfService;
             _userManager = userManager;
+            _contractApiService = contractApiService;
         }
 
-        //  Clients only see their own contracts; Admin/Manager see all
+        // Part 3: Fetch contract list from the API so the Contract/Index view shows
+        // the same data as the Admin Dashboard (which also reads from the API).
+        // The old code queried _context.Contracts directly (MVC database) which is
+        // separate from the API database — those contracts would never match.
+        //
+        // Clients only see their own contracts; Admin/Manager see all.
         public async Task<IActionResult> Index()
         {
-            var contracts = await _context.Contracts
-                .Include(c => c.Client)
-                .ToListAsync();
-            return View(contracts);
+            // commented out from Part 02 — direct DB query replaced by API call
+            // var contracts = await _context.Contracts
+            //     .Include(c => c.Client)
+            //     .ToListAsync();
+            // return View(contracts);
+
+            try
+            {
+                var allContracts = await _contractApiService.GetAllContractsAsync();
+
+                // Clients only see their own contracts
+                if (User.IsInRole("Client"))
+                {
+                    // Part 3 fix: FindByEmailAsync instead of GetUserAsync
+                    // (GetUserAsync needs NameIdentifier claim which our cookie doesn't have)
+                    var currentUser = await _userManager.FindByEmailAsync(User.Identity!.Name!);
+                    if (currentUser?.ClientID != null)
+                    {
+                        allContracts = allContracts
+                            .Where(c => c.ClientID == currentUser.ClientID!.Value)
+                            .ToList();
+                    }
+                    else
+                    {
+                        allContracts = new List<ContractApiDTO>();
+                    }
+                }
+
+                return View(allContracts);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"Could not load contracts: {ex.Message}";
+                return View(new List<ContractApiDTO>());
+            }
         }
 
         // GET: Create — Admin/Logistics only
@@ -43,14 +87,13 @@ namespace ST10448420_TechMove_GLMS.Controllers
         {
             var vm = new ContractViewModel
             {
-                Clients = _context.Clients.ToList(),
+                Clients = _context.Clients.ToList(), // Clients list still from MVC Identity DB
                 Status = "Draft",
                 StartDate = DateTime.Today,
                 EndDate = DateTime.Today.AddYears(1)
             };
             return View(vm);
         }
-
 
         [Authorize(Roles = "Admin,LogisticsManager")]
         [HttpPost]
@@ -79,7 +122,24 @@ namespace ST10448420_TechMove_GLMS.Controllers
                 return View(model);
             }
 
-            var contract = new Contract
+            // Part 3: Send the new contract to the API instead of saving directly to
+            // the MVC database. The API stores it in ST10448420_TechMove_GLMS_API_DB,
+            // which is the same database the Admin Dashboard reads from.
+            //
+            // commented out from Part 02 — direct DB save replaced by API call below:
+            // var contract = new Contract
+            // {
+            //     ClientID = model.ClientID,
+            //     StartDate = model.StartDate,
+            //     EndDate = model.EndDate,
+            //     Status = model.Status,
+            //     ServiceLevel = model.ServiceLevel,
+            //     SignedAgreementFilePath = filePath
+            // };
+            // _context.Contracts.Add(contract);
+            // await _context.SaveChangesAsync();
+
+            var dto = new CreateContractApiDTO
             {
                 ClientID = model.ClientID,
                 StartDate = model.StartDate,
@@ -89,29 +149,40 @@ namespace ST10448420_TechMove_GLMS.Controllers
                 SignedAgreementFilePath = filePath
             };
 
-            _context.Contracts.Add(contract);
-            await _context.SaveChangesAsync();
+            var (created, error) = await _contractApiService.CreateContractAsync(dto);
+
+            if (error != null)
+            {
+                ModelState.AddModelError("", $"Could not save contract: {error}");
+                model.Clients = _context.Clients.ToList();
+                return View(model);
+            }
+
             TempData["Success"] = "Contract created successfully.";
             return RedirectToAction("Index", "Admin");
         }
-
 
         [Authorize(Roles = "Admin,LogisticsManager")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
-            var contract = await _context.Contracts.FindAsync(id);
-            if (contract == null) return NotFound();
+            // Part 3: Fetch from API for consistent data source
+            var contractDto = await _contractApiService.GetContractByIdAsync(id);
+            if (contractDto == null) return NotFound();
+
+            // commented out from Part 02:
+            // var contract = await _context.Contracts.FindAsync(id);
+            // if (contract == null) return NotFound();
 
             var vm = new ContractViewModel
             {
-                ContractID = contract.ContractID,
-                ClientID = contract.ClientID,
-                StartDate = contract.StartDate,
-                EndDate = contract.EndDate,
-                Status = contract.Status,
-                ServiceLevel = contract.ServiceLevel,
-                ExistingFilePath = contract.SignedAgreementFilePath,
+                ContractID = contractDto.ContractID,
+                ClientID = contractDto.ClientID,
+                StartDate = contractDto.StartDate,
+                EndDate = contractDto.EndDate,
+                Status = contractDto.Status,
+                ServiceLevel = contractDto.ServiceLevel,
+                ExistingFilePath = contractDto.SignedAgreementFilePath,
                 Clients = _context.Clients.ToList()
             };
             return View(vm);
@@ -128,20 +199,13 @@ namespace ST10448420_TechMove_GLMS.Controllers
                 return View(model);
             }
 
-            var contract = await _context.Contracts.FindAsync(model.ContractID);
-            if (contract == null) return NotFound();
-
-            contract.ClientID = model.ClientID;
-            contract.StartDate = model.StartDate;
-            contract.EndDate = model.EndDate;
-            contract.Status = model.Status;
-            contract.ServiceLevel = model.ServiceLevel;
-
+            // If a new PDF was uploaded, save it; otherwise keep the existing path
+            string filePath = model.ExistingFilePath ?? string.Empty;
             if (model.SignedAgreementFile != null)
             {
                 try
                 {
-                    contract.SignedAgreementFilePath = await _pdfService.SaveFileAsync(model.SignedAgreementFile);
+                    filePath = await _pdfService.SaveFileAsync(model.SignedAgreementFile);
                 }
                 catch (Exception ex)
                 {
@@ -151,7 +215,22 @@ namespace ST10448420_TechMove_GLMS.Controllers
                 }
             }
 
-            await _context.SaveChangesAsync();
+            // Part 3: Update status via the API PATCH endpoint.
+            //
+            // commented out from Part 02 — direct EF update replaced by API call:
+            // var contract = await _context.Contracts.FindAsync(model.ContractID);
+            // if (contract == null) return NotFound();
+            // contract.ClientID = model.ClientID; ...
+            // await _context.SaveChangesAsync();
+
+            var (success, error) = await _contractApiService.UpdateStatusAsync(model.ContractID, model.Status);
+            if (!success)
+            {
+                ModelState.AddModelError("", $"Could not update contract: {error}");
+                model.Clients = _context.Clients.ToList();
+                return View(model);
+            }
+
             TempData["Success"] = "Contract updated.";
             return RedirectToAction("Index", "Admin");
         }
@@ -162,6 +241,8 @@ namespace ST10448420_TechMove_GLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
+            // Delete is still via the MVC context since the API does not expose
+            // DELETE /api/contracts. Kept as-is from Part 02.
             var contract = await _context.Contracts.FindAsync(id);
 
             if (contract == null)
@@ -180,22 +261,39 @@ namespace ST10448420_TechMove_GLMS.Controllers
             TempData["Success"] = $"Contract #{id} deleted successfully.";
             return RedirectToAction(nameof(Index));
         }
+
         // Details — All authorised roles
         public async Task<IActionResult> Details(int id)
         {
-            var contract = await _context.Contracts
-                .Include(c => c.Client)
-                .Include(c => c.ServiceRequests)
-                .FirstOrDefaultAsync(c => c.ContractID == id);
+            // Part 3: Fetch from the API for consistency with the Admin Dashboard.
+            var contractDto = await _contractApiService.GetContractByIdAsync(id);
+            if (contractDto == null) return NotFound();
 
-            if (contract == null) return NotFound();
-
-            //access control Clients can only view their own contracts
+            // Access control: Clients can only view their own contracts
             if (User.IsInRole("Client"))
             {
-                var user = await _userManager.GetUserAsync(User);
-                if (contract.ClientID != user.ClientID) return Forbid();
+                // Part 3 fix: FindByEmailAsync instead of GetUserAsync.
+                // GetUserAsync requires NameIdentifier claim which is not present
+                // in our cookie identity — it always returns null, causing NullReferenceException.
+                // commented out from Part 02: var user = await _userManager.GetUserAsync(User);
+                var user = await _userManager.FindByEmailAsync(User.Identity!.Name!);
+                if (user == null || contractDto.ClientID != user.ClientID)
+                    return Forbid();
             }
+
+            // Build a Contract entity from the DTO so the existing Details view
+            // (which still uses the Contract model) continues to work without changes.
+            var contract = new Contract
+            {
+                ContractID = contractDto.ContractID,
+                ClientID = contractDto.ClientID,
+                StartDate = contractDto.StartDate,
+                EndDate = contractDto.EndDate,
+                Status = contractDto.Status,
+                ServiceLevel = contractDto.ServiceLevel,
+                SignedAgreementFilePath = contractDto.SignedAgreementFilePath,
+                Client = new Client { Name = contractDto.ClientName }
+            };
 
             return View(contract);
         }
@@ -205,9 +303,11 @@ namespace ST10448420_TechMove_GLMS.Controllers
         [HttpGet]
         public async Task<IActionResult> ReuploadPdf(int id)
         {
-            var user = await _userManager.GetUserAsync(User);
+            // Part 3 fix: FindByEmailAsync instead of GetUserAsync (same reason as Details)
+            // commented out from Part 02: var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.FindByEmailAsync(User.Identity!.Name!);
             var contract = await _context.Contracts.FindAsync(id);
-            if (contract == null || contract.ClientID != user.ClientID) return NotFound();
+            if (contract == null || contract.ClientID != user?.ClientID) return NotFound();
             return View(contract);
         }
 
@@ -217,9 +317,11 @@ namespace ST10448420_TechMove_GLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReuploadPdf(int id, IFormFile file)
         {
-            var user = await _userManager.GetUserAsync(User);
+            // Part 3 fix: FindByEmailAsync instead of GetUserAsync
+            // commented out from Part 02: var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.FindByEmailAsync(User.Identity!.Name!);
             var contract = await _context.Contracts.FindAsync(id);
-            if (contract == null || contract.ClientID != user.ClientID) return NotFound();
+            if (contract == null || contract.ClientID != user?.ClientID) return NotFound();
 
             if (file == null)
             {

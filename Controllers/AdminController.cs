@@ -21,7 +21,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
         private readonly ApiServiceRequestService _serviceRequestApiService;
 
         // NOTE: ManageUsers, CreateUser, EditUser, DeleteUser still use Identity
-        // via UserManager — those are kept as-is since Identity lives on the API side.
+        // via UserManager — those are kept as-is since Identity lives on the MVC side.
         // In a full SOA refactor you would add a /api/users endpoint too, but for
         // the scope of this submission the user management pages remain direct-Identity.
         private readonly UserManager<ApplicationUser> _userManager;
@@ -46,7 +46,7 @@ namespace ST10448420_TechMove_GLMS.Controllers
             _context = context;
         }
 
-        // ── CONTRACTS (via API) ────────────────────────────────────────────────────────────────
+        //the Contracts are operating through the API now, so the Index action is updated to call the API service instead of querying the database directly. ny exceptions that may occur during the API call and display an appropriate error message in the view.
 
         public async Task<IActionResult> Index(string? search, string? status)
         {
@@ -130,15 +130,12 @@ namespace ST10448420_TechMove_GLMS.Controllers
             return RedirectToAction("ServiceRequests");
         }
 
-        // ── USER MANAGEMENT (direct Identity — kept from Part 2) ──────────────────────────────
-        // These actions were omitted during the Part 3 refactor but the views and nav links
-        // still exist. Restoring them here using the MVC's own UserManager/RoleManager.
+        //(direct Identity — kept from Part 2)
 
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ManageUsers()
         {
-            
-        var users = _userManager.Users.ToList();
+            var users = _userManager.Users.ToList();
             var model = new List<UserWithRoleViewModel>();
 
             foreach (var user in users)
@@ -169,7 +166,11 @@ namespace ST10448420_TechMove_GLMS.Controllers
         [HttpGet]
         public IActionResult CreateUser()
         {
-            var vm = new CreateUserViewModel
+            // Part 3 fix: Changed from CreateUserViewModel to GLMSUserManagementViewModel
+            // to match what Views/Admin/CreateUser.cshtml declares as its @model.
+            // Previously passing CreateUserViewModel caused InvalidOperationException
+            // because the view declares @model GLMSUserManagementViewModel.
+            var vm = new GLMSUserManagementViewModel
             {
                 Clients = _context.Clients.ToList()
             };
@@ -179,8 +180,10 @@ namespace ST10448420_TechMove_GLMS.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateUser(CreateUserViewModel model)
+        public async Task<IActionResult> CreateUser(GLMSUserManagementViewModel model)
         {
+            // Part 3 fix: Parameter changed from CreateUserViewModel to GLMSUserManagementViewModel
+            // to match the view's @model declaration and the GET action above.
             if (!ModelState.IsValid)
             {
                 model.Clients = _context.Clients.ToList();
