@@ -137,8 +137,18 @@ namespace ST10448420_TechMove_GLMS
                 app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
+            // Docker fix: Skip HTTPS redirection when running inside a container.
+            // Kestrel runs on plain HTTP (port 8080) in Docker — there is no TLS certificate
+            // available inside the image. HTTPS termination would be handled by a load balancer
+            // or reverse proxy in a real production environment.
+            // The ASPNETCORE_ENVIRONMENT is set to "Docker" in docker-compose.yml,
+            // so we check for that specific value here.
+            if (!string.Equals(app.Environment.EnvironmentName, "Docker",
+                    StringComparison.OrdinalIgnoreCase))
+            {
 
-            app.UseHttpsRedirection();
+                app.UseHttpsRedirection();
+            }
             app.UseStaticFiles();
             app.UseRouting();
 
